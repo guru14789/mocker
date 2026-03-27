@@ -7,13 +7,13 @@ import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyA3oeVaoxe0-kYDKD9ivrG45KddHHGuwnY",
-  authDomain: "mocker-43609.firebaseapp.com",
-  projectId: "mocker-43609",
-  storageBucket: "mocker-43609.firebasestorage.app",
-  messagingSenderId: "148771495874",
-  appId: "1:148771495874:web:cfe89a5102222ef112805b",
-  measurementId: "G-Y70XCFRCHW"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

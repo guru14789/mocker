@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { CheckCircle2, XCircle, AlertCircle, TrendingUp, BarChart3, ArrowRight } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, TrendingUp, BarChart3, ArrowRight, ClipboardList } from 'lucide-react'
 
 const StatItem = ({ label, value, icon: Icon, color }) => (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center gap-6 shadow-sm hover:translate-y-[-4px] transition-all">
@@ -18,14 +18,72 @@ const StatItem = ({ label, value, icon: Icon, color }) => (
 export default function ResultPage() {
     const { sessionId } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const [result, setResult] = useState(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchResult = async () => {
+             // Check for state passed from ExamPage first for immediate/real calculation
+            if (location.state && location.state.answers && location.state.questions) {
+                const { answers, questions } = location.state;
+                let totalMarks = 0, scoredMarks = 0, correct = 0, incorrect = 0, attempted = 0;
+
+                questions.forEach((q, idx) => {
+                    totalMarks += (q.marks || 1);
+                    const selected = answers[idx];
+                    if (selected) {
+                        attempted++;
+                        if (selected === q.correct) {
+                            scoredMarks += (q.marks || 1);
+                            correct++;
+                        } else {
+                            incorrect++;
+                        }
+                    }
+                });
+
+                const topicMap = {};
+                questions.forEach((q, idx) => {
+                    const topic = q.topic || 'General';
+                    if (!topicMap[topic]) topicMap[topic] = { total: 0, correct: 0 };
+                    topicMap[topic].total += (q.marks || 1);
+                    if (answers[idx] === q.correct) {
+                        topicMap[topic].correct += (q.marks || 1);
+                    }
+                });
+
+                const topicPerformance = Object.keys(topicMap).map(topic => ({
+                    topic,
+                    score: Math.round((topicMap[topic].correct / topicMap[topic].total) * 100)
+                }));
+
+                setResult({
+                    scoredMarks,
+                    totalMarks,
+                    accuracy: attempted > 0 ? (correct / attempted * 100).toFixed(1) : 0,
+                    attempted,
+                    correct,
+                    incorrect,
+                    unattempted: questions.length - attempted,
+                    topicPerformance
+                });
+                setLoading(false);
+                return;
+            }
+
             try {
                 const res = await axios.get(`http://localhost:5000/api/results/${sessionId}`)
-                setResult(res.data)
+                // Add demo topics if backend doesn't provide them
+                const data = res.data;
+                if (!data.topicPerformance) {
+                    data.topicPerformance = [
+                        { topic: 'Mental Ability', score: 85 },
+                        { topic: 'Core Technical', score: 92 },
+                        { topic: 'Communication', score: 64 },
+                    ];
+                }
+                setResult(data)
             } catch (err) {
                 console.error('Failed to fetch result', err)
             } finally {
@@ -33,7 +91,7 @@ export default function ResultPage() {
             }
         }
         fetchResult()
-    }, [sessionId])
+    }, [sessionId, location.state])
 
     if (loading) return <div className="h-screen flex items-center justify-center font-bold">Generating Report...</div>
 
@@ -44,9 +102,19 @@ export default function ResultPage() {
                     <h1 className="text-5xl font-black font-outfit text-slate-900 tracking-tight leading-none mb-2">Exam Result</h1>
                     <p className="text-slate-500 font-medium text-lg">Comprehensive score analysis and performance metrics.</p>
                 </div>
-                <button onClick={() => navigate('/')} className="btn-primary py-4 px-10 text-lg flex items-center gap-2 shadow-2xl shadow-slate-300">
-                    Return Home <ArrowRight size={20} strokeWidth={3} />
-                </button>
+                <div className="flex gap-4">
+                    {location.state?.uniqueLink && (
+                        <button 
+                            onClick={() => navigate(`/exam/${location.state.uniqueLink}`)} 
+                            className="bg-white text-slate-900 border-2 border-slate-200 py-4 px-10 rounded-full text-lg font-black flex items-center gap-2 shadow-sm hover:bg-slate-50 transition-all"
+                        >
+                            Retake Exam
+                        </button>
+                    )}
+                    <button onClick={() => navigate('/')} className="btn-primary py-4 px-10 text-lg flex items-center gap-2 shadow-2xl shadow-slate-300">
+                        Return Home <ArrowRight size={20} strokeWidth={3} />
+                    </button>
+                </div>
             </header>
 
             <main className="max-w-6xl mx-auto space-y-12">
@@ -82,11 +150,7 @@ export default function ResultPage() {
                         <BarChart3 size={32} className="text-slate-400" /> Topic Performance
                     </h3>
                     <div className="space-y-6">
-                        {[
-                            { topic: 'General Knowledge', score: 85 },
-                            { topic: 'Logical Reasoning', score: 92 },
-                            { topic: 'Quantitative Aptitude', score: 64 },
-                        ].map((item, idx) => (
+                        {(result?.topicPerformance || []).map((item, idx) => (
                             <div key={idx} className="space-y-3">
                                 <div className="flex justify-between font-bold text-slate-700">
                                     <span>{item.topic}</span>
@@ -104,4 +168,3 @@ export default function ResultPage() {
     )
 }
 
-const ClipboardList = CheckCircle2; // Fallback for stat item

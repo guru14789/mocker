@@ -9,7 +9,7 @@ const Pricing = () => {
   ]
 
   return (
-    <section id="pricing" className="py-24 bg-slate-50 px-6">
+    <section id="pricing" className="py-12 md:py-16 bg-white px-6">
       <div className="max-w-6xl mx-auto text-center mb-16">
         <h2 className="text-4xl font-black font-outfit text-slate-900 mb-4">Simple, Transparent Pricing</h2>
         <p className="text-slate-500 font-medium max-w-2xl mx-auto">Choose the plan that fits your needs. No hidden fees.</p>

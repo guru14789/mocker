@@ -69,7 +69,7 @@ const CompanySlider = () => {
   return (
     <div 
       ref={container} 
-      className="w-full bg-[#030712] py-10 overflow-hidden relative z-20 border-y border-slate-900"
+      className="w-full bg-[#030712] py-10 mt-0 overflow-hidden relative z-20 border-y border-slate-900 shadow-2xl"
     >
       <div 
         ref={slider} 

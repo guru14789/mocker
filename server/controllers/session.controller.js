@@ -5,6 +5,14 @@ const testsCollection = db.collection('tests');
 const questionsCollection = db.collection('questions');
 const resultsCollection = db.collection('results');
 
+const SAMPLE_QUESTIONS = [
+    { title: 'React Fragments', marks: 2, correctAnswers: ['B'] },
+    { title: 'useEffect Hook', marks: 2, correctAnswers: ['C'] },
+    { title: 'useMemo Hook', marks: 3, correctAnswers: ['B'] },
+    { title: 'Key Prop', marks: 2, correctAnswers: ['C'] },
+    { title: 'Update State', marks: 3, correctAnswers: ['B'] }
+];
+
 const startSession = async (req, res) => {
     const { testId } = req.body;
     try {
@@ -48,7 +56,12 @@ const submitExam = async (req, res) => {
         const sessionDoc = await sessionsCollection.doc(sessionId).get();
         const session = sessionDoc.data();
         const questionsSnapshot = await questionsCollection.where('testId', '==', session.testId).orderBy('order', 'asc').get();
-        const questions = questionsSnapshot.docs.map(doc => doc.data());
+        let questions = questionsSnapshot.docs.map(doc => doc.data());
+
+        // fallback for demo if no questions in DB
+        if (questions.length === 0) {
+            questions = SAMPLE_QUESTIONS;
+        }
 
         let totalMarks = 0, scoredMarks = 0;
         let correct = 0, incorrect = 0, attempted = 0;

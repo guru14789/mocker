@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/auth/me');
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/me`);
       setUser(res.data);
     } catch (err) {
       localStorage.removeItem('token');
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/login`, { email, password });
     localStorage.setItem('token', res.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
     setUser(res.data.user);
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (userData) => {
-    const res = await axios.post('http://localhost:5000/api/auth/register', userData);
+    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/register`, userData);
     localStorage.setItem('token', res.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
     setUser(res.data.user);
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       const userEmail = result.user.email;
       const userName = result.user.displayName;
       
-      const res = await axios.post('http://localhost:5000/api/auth/google', {
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/google`, {
         email: userEmail,
         name: userName,
         role: role

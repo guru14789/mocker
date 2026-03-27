@@ -1,31 +1,50 @@
+const path = require('path');
 const admin = require('firebase-admin');
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-// If you have a service account JSON, you can use:
-// const serviceAccount = require("./path/to/serviceAccountKey.json");
+let db = null;
+let auth = null;
 
-let app;
-if (!admin.apps.length) {
-  // Use environment variables for sensitive info
-  const serviceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  };
+try {
+  if (!admin.apps.length) {
+    const rawProjectId = process.env.FIREBASE_PROJECT_ID;
+    const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const rawClientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 
-  if (serviceAccount.projectId && serviceAccount.privateKey && serviceAccount.clientEmail) {
-    app = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-  } else {
-    // Fallback for local development if GOOGLE_APPLICATION_CREDENTIALS is set
-    app = admin.initializeApp();
+    if (rawProjectId && rawPrivateKey && rawClientEmail) {
+      // Clean the private key (remove quotes and handle escaped newlines)
+      const cleanPrivateKey = rawPrivateKey
+        .replace(/^"|"$/g, '') // Remove wrapping quotes
+        .replace(/\\n/g, '\n'); // Re-enable newlines
+
+      const serviceAccount = {
+        projectId: rawProjectId,
+        privateKey: cleanPrivateKey,
+        clientEmail: rawClientEmail,
+      };
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: rawProjectId // Explicitly reinforce project ID
+      });
+      console.log('--- FIREBASE ADMIN: SUCCESSFUL INITIALIZATION ---');
+    } else {
+      console.warn('--- FIREBASE ADMIN: CREDENTIALS MISSING ---');
+      admin.initializeApp();
+    }
   }
-} else {
-  app = admin.app();
+  
+  // Explicitly set projectId to avoid findAndCacheProjectId failures
+  db = admin.firestore();
+  if (process.env.FIREBASE_PROJECT_ID) {
+      db.settings({ projectId: process.env.FIREBASE_PROJECT_ID });
+  }
+  auth = admin.auth();
+} catch (error) {
+  console.error('--- FIREBASE ADMIN: INITIALIZATION ERROR ---');
+  console.error(error.message);
+  db = null; // Ensure controllers see it is null
+  auth = null;
 }
-
-const db = admin.firestore();
-const auth = admin.auth();
 
 module.exports = { admin, db, auth };

@@ -27,7 +27,7 @@ const Feedback = () => {
     ];
 
     return (
-        <section id="feedback" className="py-24 bg-slate-50/50">
+        <section id="feedback" className="py-12 md:py-16 bg-white">
             <div className="max-w-6xl mx-auto px-6">
                 <div className="text-center mb-16 space-y-4">
                     <h2 className="text-sm font-bold tracking-[0.3em] uppercase text-slate-500">Testimonials</h2>

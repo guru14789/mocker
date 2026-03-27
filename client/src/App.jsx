@@ -1,8 +1,8 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import Auth from './pages/Auth'
+import Communities from './pages/Communities'
 import CreatorDashboard from './pages/CreatorDashboard'
 import TestBuilder from './pages/TestBuilder'
 import ExamPage from './pages/ExamPage'
@@ -18,9 +18,10 @@ function App() {
       <div className="min-h-screen font-sans font-medium text-slate-900 overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          
+          <Route path="/login" element={<Auth />} />
+          <Route path="/signup" element={<Auth />} />
+          <Route path="/communities" element={<Communities />} />
+
           <Route path="/dashboard" element={
             <ProtectedRoute role="creator"><CreatorDashboard /></ProtectedRoute>
           } />
@@ -32,10 +33,10 @@ function App() {
           } />
 
           <Route path="/exam/:uniqueLink" element={
-            <ProtectedRoute><ExamPage /></ProtectedRoute>
+            <ExamPage />
           } />
           <Route path="/result/:sessionId" element={
-            <ProtectedRoute><ResultPage /></ProtectedRoute>
+            <ResultPage />
           } />
           <Route path="/candidate-dashboard" element={
             <ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>

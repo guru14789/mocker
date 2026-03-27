@@ -15,54 +15,41 @@ import { ShieldCheck, FileEdit, BarChart3 } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const Features = () => {
-  const container = React.useRef()
-  const items = [
-    { 
-      title: 'Secure Proctoring', 
-      desc: 'Advanced tab-switching and window-blur detection to prevent cheating.', 
-      icon: <ShieldCheck size={42} strokeWidth={1.5} className="text-slate-900" />
-    },
-    { 
-      title: 'OMR Interface', 
-      desc: 'Real-time sync between question selection and the OMR bubble sheet.', 
-      icon: <FileEdit size={42} strokeWidth={1.5} className="text-slate-900" />
-    },
-    { 
-      title: 'Deep Analytics', 
-      desc: 'Question-wise performance and candidate violation logs.', 
-      icon: <BarChart3 size={42} strokeWidth={1.5} className="text-slate-900" />
-    },
-  ]
-
-  return (
-    <section id="features" ref={container} className="py-24 bg-white px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-12">
-          {items.map((item, i) => (
-            <div key={i} className="feature-card group space-y-6 p-10 rounded-[2.5rem] border border-slate-100 bg-slate-50/30 hover:bg-slate-900 hover:border-slate-800 transition-all duration-500 cursor-default">
-              <div className="group-hover:scale-110 group-hover:text-white transition-all transform origin-left duration-500">
-                {typeof item.icon === 'string' ? item.icon : React.cloneElement(item.icon, { 
-                  className: `${item.icon.props.className} group-hover:text-white` 
-                })}
-              </div>
-              <h3 className="text-2xl font-bold font-outfit text-slate-900 group-hover:text-white transition-colors duration-500">{item.title}</h3>
-              <p className="text-slate-600 leading-relaxed text-lg group-hover:text-slate-300 transition-colors duration-500">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
 
 const Landing = () => {
+  const main = React.useRef()
+
+  useGSAP(() => {
+    // Hero Entrance
+    const tl = gsap.timeline()
+    tl.from('.hero-content > *', {
+      y: 20,
+      duration: 0.8,
+      stagger: 0.15,
+      ease: 'power3.out'
+    })
+
+    // Sub-section revealing (Professional expo ease)
+    const sections = gsap.utils.toArray('section')
+    sections.forEach((section) => {
+      gsap.from(section, {
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse'
+        },
+        y: 60,
+        duration: 1.4,
+        ease: 'expo.out'
+      })
+    })
+  }, { scope: main })
+
   return (
-    <div className="bg-white">
+    <div ref={main} className="bg-white scroll-smooth overflow-x-hidden">
       <Navbar />
       <Hero />
       <CompanySlider />
-      <Features />
       <Feedback />
       <Pricing />
       <About />
