@@ -33,7 +33,7 @@ function App() {
           } />
 
           <Route path="/exam/:uniqueLink" element={
-            <ExamPage />
+            <ProtectedRoute><ExamPage /></ProtectedRoute>
           } />
           <Route path="/result/:sessionId" element={
             <ResultPage />

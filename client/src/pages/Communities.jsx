@@ -97,12 +97,18 @@ const Communities = () => {
                 <div className="grid md:grid-cols-3 gap-6">
                     {activeExams.map((exam, index) => (
                         <div key={index} className="exam-card group bg-slate-50 border border-slate-100 p-6 rounded-[2rem] hover:bg-white hover:shadow-xl transition-all duration-300 cursor-pointer">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-${exam.color}-100 text-${exam.color}-700`}>
-                                    {exam.difficulty}
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg shadow-sm">
-                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                            <div className="flex justify-between items-center mb-6 h-10">
+                                {exam.difficulty === 'Hard' ? (
+                                    <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-100">
+                                        HARD
+                                    </div>
+                                ) : (
+                                    <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                        MEDIUM
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-50 uppercase tracking-widest">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
                                     LIVE
                                 </div>
                             </div>
