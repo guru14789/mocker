@@ -96,22 +96,22 @@ export default function ResultPage() {
     if (loading) return <div className="h-screen flex items-center justify-center font-bold">Generating Report...</div>
 
     return (
-        <div className="min-h-screen bg-slate-50 p-12 overflow-y-auto font-sans">
-            <header className="max-w-6xl mx-auto flex justify-between items-center mb-16">
+        <div className="min-h-screen bg-slate-50 p-6 md:p-12 overflow-y-auto font-sans">
+            <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-12 md:mb-16 gap-8">
                 <div>
-                    <h1 className="text-5xl font-black font-outfit text-slate-900 tracking-tight leading-none mb-2">Exam Result</h1>
-                    <p className="text-slate-500 font-medium text-lg">Comprehensive score analysis and performance metrics.</p>
+                    <h1 className="text-4xl md:text-5xl font-black font-outfit text-slate-900 tracking-tight leading-none mb-4 md:mb-2 italic">Exam Result</h1>
+                    <p className="text-slate-500 font-medium text-base md:text-lg">Comprehensive score analysis and performance metrics.</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                     {location.state?.uniqueLink && (
                         <button 
                             onClick={() => navigate(`/exam/${location.state.uniqueLink}`)} 
-                            className="bg-white text-slate-900 border-2 border-slate-200 py-4 px-10 rounded-full text-lg font-black flex items-center gap-2 shadow-sm hover:bg-slate-50 transition-all"
+                            className="bg-white text-slate-900 border-2 border-slate-200 py-3 md:py-4 px-6 md:px-10 rounded-full text-base md:text-lg font-black flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 transition-all"
                         >
                             Retake Exam
                         </button>
                     )}
-                    <button onClick={() => navigate('/')} className="btn-primary py-4 px-10 text-lg flex items-center gap-2 shadow-2xl shadow-slate-300">
+                    <button onClick={() => navigate('/')} className="btn-primary py-3 md:py-4 px-6 md:px-10 text-base md:text-lg flex items-center justify-center gap-2 shadow-2xl shadow-slate-300">
                         Return Home <ArrowRight size={20} strokeWidth={3} />
                     </button>
                 </div>
@@ -119,17 +119,17 @@ export default function ResultPage() {
 
             <main className="max-w-6xl mx-auto space-y-12">
                 {/* Score Section */}
-                <div className="bg-slate-900 rounded-[3rem] p-16 flex items-center justify-between text-white shadow-2xl relative overflow-hidden group">
+                <div className="bg-slate-900 rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-16 flex flex-col md:flex-row items-center justify-between text-white shadow-2xl relative overflow-hidden group gap-8">
                      {/* Decorative glow */}
                     <div className="absolute top-0 right-0 w-1/3 h-full bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-1000 -z-0" />
-                    <div className="relative z-10 space-y-4">
+                    <div className="relative z-10 space-y-4 text-center md:text-left">
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total Scored Points</span>
-                        <h2 className="text-8xl font-black font-outfit leading-none mb-6">
-                            {result?.scoredMarks?.toFixed(1)} <span className="text-4xl text-slate-500">/ {result?.totalMarks}</span>
+                        <h2 className="text-6xl md:text-8xl font-black font-outfit leading-none mb-6 italic">
+                            {result?.scoredMarks?.toFixed(1)} <span className="text-2xl md:text-4xl text-slate-500">/ {result?.totalMarks}</span>
                         </h2>
-                        <div className="flex gap-4">
-                            <div className="px-6 py-2 bg-white/10 rounded-full text-sm font-bold border border-white/5 backdrop-blur-md">Accuracy: {result?.accuracy}%</div>
-                            <div className="px-6 py-2 bg-white/10 rounded-full text-sm font-bold border border-white/5 backdrop-blur-md">Status: Passed</div>
+                        <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                            <div className="px-6 py-2 bg-white/10 rounded-full text-[10px] md:text-sm font-bold border border-white/5 backdrop-blur-md">Accuracy: {result?.accuracy}%</div>
+                            <div className="px-6 py-2 bg-white/10 rounded-full text-[10px] md:text-sm font-bold border border-white/5 backdrop-blur-md">Status: Passed</div>
                         </div>
                     </div>
                     <div className="relative z-10 hidden md:block">
@@ -138,14 +138,14 @@ export default function ResultPage() {
                 </div>
 
                 {/* Grid Components */}
-                <div className="grid md:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
                     <StatItem label="Attempted" value={result?.attempted} icon={ClipboardList} color="bg-slate-800" />
                     <StatItem label="Correct" value={result?.correct} icon={CheckCircle2} color="bg-emerald-500" />
                     <StatItem label="Incorrect" value={result?.incorrect} icon={XCircle} color="bg-red-500" />
                     <StatItem label="Unattempted" value={result?.unattempted} icon={AlertCircle} color="bg-amber-500" />
                 </div>
 
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 p-12 shadow-sm">
+                <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 p-8 md:p-12 shadow-sm">
                     <h3 className="text-3xl font-black font-outfit text-slate-900 mb-8 flex items-center gap-4">
                         <BarChart3 size={32} className="text-slate-400" /> Topic Performance
                     </h3>

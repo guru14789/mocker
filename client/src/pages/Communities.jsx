@@ -47,10 +47,11 @@ const Communities = () => {
     ];
 
     useGSAP(() => {
-        gsap.from('.exam-card', {
-            y: 40,
+        // Only animate the header elements for a clean entry
+        gsap.from('.header-content', {
+            y: 20,
+            opacity: 0,
             duration: 0.8,
-            stagger: 0.1,
             ease: 'power3.out'
         })
     }, { scope: container })
@@ -60,44 +61,44 @@ const Communities = () => {
             <Navbar />
             
             {/* Header Section */}
-            <div className="bg-slate-50 py-20 px-6">
-                <div className="max-w-6xl mx-auto flex flex-col items-center text-center space-y-8">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-widest">
-                        <Users size={14} /> Global Network
+            <div className="bg-slate-50 py-28 px-6">
+                <div className="max-w-6xl mx-auto flex flex-col items-center text-center space-y-8 header-content">
+                    <div className="inline-flex items-center gap-3 px-6 py-2 bg-slate-900 shadow-xl shadow-slate-200 text-white rounded-full text-xs font-black uppercase tracking-[0.25em]">
+                        <Users size={16} /> Global Network
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black font-outfit text-slate-900 leading-tight">
-                        Explore Learning <br className="hidden md:block" />
+                    <h1 className="text-4xl md:text-7xl font-black font-outfit text-slate-900 leading-[1.1] tracking-tight">
+                        Explore Specialized <br className="hidden md:block" />
                         Communities.
                     </h1>
-                    <p className="text-lg text-slate-500 max-w-2xl font-medium leading-relaxed">
-                        Join thousands of experts and students. Discover exams, share resources, and build your assessment network.
+                    <p className="text-xl text-slate-500 max-w-2xl font-medium leading-relaxed italic">
+                        "Join thousands of experts and candidates practicing for success."
                     </p>
                     
                     {/* Search Bar */}
-                    <div className="w-full max-w-xl relative group">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={20} />
+                    <div className="w-full max-w-2xl relative group mt-8">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={24} />
                         <input 
                             type="text" 
-                            placeholder="Search communities, topics, or exams..."
-                            className="w-full pl-14 pr-6 py-5 bg-white border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all font-medium shadow-sm shadow-slate-200/50"
+                            placeholder="Search clinical, technical, or financial exams..."
+                            className="w-full pl-16 pr-8 py-6 bg-white border-2 border-slate-100 rounded-[2rem] focus:outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-bold text-lg shadow-sm shadow-slate-200/50"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Active Exams Section */}
-            <div className="py-12 px-6 max-w-6xl mx-auto border-b border-slate-100">
-                <div className="flex items-center justify-between mb-10">
-                    <div>
-                        <h2 className="text-2xl font-extrabold text-[#0F172A] font-outfit uppercase tracking-tight">Active Exams</h2>
-                        <p className="text-slate-500 font-medium">Join an assessment currently in progress</p>
+            <div className="py-24 px-6 max-w-6xl mx-auto">
+                <div className="flex items-center justify-between mb-16">
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-black text-slate-900 font-outfit uppercase tracking-tight">Enrolled Assessments</h2>
+                        <div className="h-1 w-20 bg-indigo-500 rounded-full"></div>
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-3 gap-10 items-stretch">
                     {activeExams.map((exam, index) => (
-                        <div key={index} className="exam-card group bg-slate-50 border border-slate-100 p-6 rounded-[2rem] hover:bg-white hover:shadow-xl transition-all duration-300 cursor-pointer">
-                            <div className="flex justify-between items-center mb-6 h-10">
+                        <div key={index} className="exam-card group bg-slate-50 border border-slate-100 p-8 rounded-[3rem] hover:bg-white hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col h-full">
+                            <div className="flex justify-between items-center mb-8 h-10">
                                 {exam.difficulty === 'Hard' ? (
                                     <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-100">
                                         HARD
@@ -113,22 +114,28 @@ const Communities = () => {
                                 </div>
                             </div>
                             
-                            <h3 className="text-lg font-bold font-outfit text-slate-900 mb-2 leading-snug group-hover:text-slate-600 transition-colors">{exam.title}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">{exam.community}</p>
-                            
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Duration</p>
-                                    <p className="text-sm font-bold text-slate-900">{exam.time}</p>
-                                </div>
-                                <div className="space-y-1 text-right">
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Ongoing</p>
-                                    <p className="text-sm font-bold text-slate-900">{exam.participants} users</p>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold font-outfit text-slate-900 mb-2 leading-tight min-h-[3rem] line-clamp-2 group-hover:text-slate-600 transition-colors">
+                                    {exam.title}
+                                </h3>
+                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-8 leading-none">
+                                    {exam.community}
+                                </p>
+                                
+                                <div className="grid grid-cols-2 gap-4 mb-8 pt-8 border-t border-slate-100/50">
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Duration</p>
+                                        <p className="text-sm font-black text-slate-900">{exam.time}</p>
+                                    </div>
+                                    <div className="space-y-1 text-right">
+                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Ongoing</p>
+                                        <p className="text-sm font-black text-slate-900">{exam.participants} users</p>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <Link to={`/exam/${exam.link}`} className="block w-full">
-                                <button className="w-full py-3 bg-white border border-slate-200 text-slate-900 rounded-xl text-sm font-bold group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
+                            <Link to={`/exam/${exam.link}`} className="block w-full mt-auto">
+                                <button className="w-full py-4 bg-white border-2 border-slate-100 text-slate-900 rounded-[1.25rem] text-xs font-black uppercase tracking-widest group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all shadow-sm">
                                     Join Exam
                                 </button>
                             </Link>
