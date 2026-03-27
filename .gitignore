@@ -1,19 +1,72 @@
-node_modules
+# Dependency directories
+node_modules/
+jspm_packages/
+client/node_modules/
+server/node_modules/
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+
+# Build and Output
+dist/
+dist-ssr/
+build/
+build-server/
+*.local
+.vite/
+server/logs/
+client/dist/
+
+# Logs and Diagnostics
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+logs/
+server/*.log
+
+# Environment and Secrets
 .env
 .env.local
 .env.*.local
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!tsconfig.node.json
-!tsconfig.app.json
-dist
-build
-.DS_Store
-*.log
-# Secrets and Keys
-*-firebase-adminsdk-*.json
-*.key
+.env.development
+.env.production
+.env.test
+*.firebase-adminsdk-*.json
+*.p12
+*.json.key
 *.pem
 *.cert
+*.crt
+*.key
+
+# Editor and Toolings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.prettiercache
+.eslintcache
+
+# OS Specific
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Vite
+vite.config.ts.timestamp-*
+vite.config.js.timestamp-*
+
+# Keep certain JSON files
+!package.json
+!tsconfig.json
+!tsconfig.*.json
+!eslint.config.js
+!components.json

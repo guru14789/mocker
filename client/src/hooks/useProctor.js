@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react';
 
-export const useProctor = ({ onViolation, maxViolations = 3 }) => {
-  const violationCount = useRef(0);
+export const useProctor = ({ onViolation, maxViolations = 2 }) => {
+  const violations = useRef({
+    tab_switch: 0,
+    window_blur: 0,
+    head_turn: 0,
+    keyboard_shortcut: 0
+  });
 
   useEffect(() => {
     // Disable right-click
@@ -17,20 +22,20 @@ export const useProctor = ({ onViolation, maxViolations = 3 }) => {
     // Tab / window switch detection
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        violationCount.current += 1;
-        onViolation({ type: 'tab_switch', count: violationCount.current });
+        violations.current.tab_switch += 1;
+        onViolation({ type: 'tab_switch', count: violations.current.tab_switch });
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Window blur detection
     const handleBlur = () => {
-      violationCount.current += 1;
-      onViolation({ type: 'window_blur', count: violationCount.current });
+      violations.current.window_blur += 1;
+      onViolation({ type: 'window_blur', count: violations.current.window_blur });
     };
     window.addEventListener('blur', handleBlur);
 
-    // Block keyboard shortcuts (Ctrl+C, Ctrl+V, Alt+Tab, F12)
+    // Block keyboard shortcuts
     const blockKeys = (e) => {
       if (
         (e.ctrlKey && ['c', 'v', 'x', 'u', 's', 'a'].includes(e.key.toLowerCase())) ||
@@ -39,7 +44,8 @@ export const useProctor = ({ onViolation, maxViolations = 3 }) => {
         e.key === 'PrintScreen'
       ) {
         e.preventDefault();
-        onViolation({ type: 'keyboard_shortcut', key: e.key });
+        violations.current.keyboard_shortcut += 1;
+        onViolation({ type: 'keyboard_shortcut', key: e.key, count: violations.current.keyboard_shortcut });
       }
     };
     document.addEventListener('keydown', blockKeys);
@@ -53,7 +59,12 @@ export const useProctor = ({ onViolation, maxViolations = 3 }) => {
       window.removeEventListener('blur', handleBlur);
       document.removeEventListener('keydown', blockKeys);
     };
-  }, [onViolation, maxViolations]);
+  }, [onViolation]);
 
-  return violationCount.current;
+  const triggerHeadTurn = () => {
+    violations.current.head_turn += 1;
+    onViolation({ type: 'head_turn', count: violations.current.head_turn });
+  };
+
+  return { triggerHeadTurn };
 };
