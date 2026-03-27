@@ -65,7 +65,7 @@ const Hero = () => {
         />
       </div>
 
-      <div className="hero-content max-w-4xl mx-auto space-y-8 relative z-5 py-10 px-2 -translate-y-44 md:-translate-y-48">
+      <div className="hero-content max-w-4xl mx-auto space-y-8 relative z-5 py-10 px-2 -translate-y-10 md:-translate-y-10">
         <h1 className="hero-title text-3xl md:text-5xl font-extrabold font-outfit text-[#0F172A] tracking-tight leading-[1.04] mb-4">
           Smart Exams. <br />
           Seamless Experience.
