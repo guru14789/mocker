@@ -40,7 +40,7 @@ const createTest = async (req, res) => {
 
 const getTests = async (req, res) => {
     try {
-        const querySnapshot = await testsCollection.where('creatorId', '==', req.user.id).orderBy('createdAt', 'desc').get();
+        const querySnapshot = await testsCollection.where('creatorId', '==', req.user.id).get();
         const tests = querySnapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
         res.status(200).json(tests);
     } catch (err) {
@@ -53,7 +53,7 @@ const getTest = async (req, res) => {
         const testDoc = await testsCollection.doc(req.params.id).get();
         if (!testDoc.exists) return res.status(404).json({ message: 'Test not found' });
         
-        const questionsSnapshot = await questionsCollection.where('testId', '==', req.params.id).orderBy('order', 'asc').get();
+        const questionsSnapshot = await questionsCollection.where('testId', '==', req.params.id).get();
         const questions = questionsSnapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
         res.status(200).json({ test: { _id: testDoc.id, ...testDoc.data() }, questions });
     } catch (err) {
@@ -105,7 +105,7 @@ const getTestByLink = async (req, res) => {
         if (querySnapshot.empty) return res.status(404).json({ message: 'Exam not found or not published' });
         
         const testDoc = querySnapshot.docs[0];
-        const questionsSnapshot = await questionsCollection.where('testId', '==', testDoc.id).orderBy('order', 'asc').get();
+        const questionsSnapshot = await questionsCollection.where('testId', '==', testDoc.id).get();
         const questions = questionsSnapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
         res.status(200).json({ test: { _id: testDoc.id, ...testDoc.data() }, questions });
     } catch (err) {

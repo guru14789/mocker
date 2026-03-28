@@ -28,7 +28,7 @@ const getResult = async (req, res) => {
 const getTestResults = async (req, res) => {
     const { testId } = req.params;
     try {
-        const querySnapshot = await resultsCollection.where('testId', '==', testId).orderBy('scoredMarks', 'desc').get();
+        const querySnapshot = await resultsCollection.where('testId', '==', testId).get();
         const results = await Promise.all(querySnapshot.docs.map(async doc => {
             const data = doc.data();
             const resObj = { _id: doc.id, ...data };
@@ -51,7 +51,7 @@ const getTestResults = async (req, res) => {
 const getLeaderboard = async (req, res) => {
     const { testId } = req.params;
     try {
-        const querySnapshot = await resultsCollection.where('testId', '==', testId).orderBy('scoredMarks', 'desc').limit(10).get();
+        const querySnapshot = await resultsCollection.where('testId', '==', testId).limit(10).get();
         const results = await Promise.all(querySnapshot.docs.map(async doc => {
             const data = doc.data();
             const resObj = { _id: doc.id, ...data };

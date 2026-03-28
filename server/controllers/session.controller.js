@@ -55,7 +55,7 @@ const submitExam = async (req, res) => {
         
         const sessionDoc = await sessionsCollection.doc(sessionId).get();
         const session = sessionDoc.data();
-        const questionsSnapshot = await questionsCollection.where('testId', '==', session.testId).orderBy('order', 'asc').get();
+        const questionsSnapshot = await questionsCollection.where('testId', '==', session.testId).get();
         let questions = questionsSnapshot.docs.map(doc => doc.data());
 
         // fallback for demo if no questions in DB
