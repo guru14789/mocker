@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Link as LinkIcon, Edit, BarChart3, Copy } from 'lucide-react'
+import { Link as LinkIcon, Edit, BarChart3, Copy, Printer } from 'lucide-react'
 
 const TestsTab = ({ tests }) => {
     const copyLink = (link) => {
@@ -15,12 +15,22 @@ const TestsTab = ({ tests }) => {
                 {tests.map(test => (
                     <div key={test._id} className="p-8 rounded-[2rem] bg-slate-50 border border-slate-100 hover:border-slate-300 transition-all hover:shadow-xl hover:shadow-slate-100 relative group">
                         <div className="flex justify-between items-start mb-6">
-                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                test.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                            }`}>
-                                {test.status}
-                            </span>
+                             <div className="flex gap-2">
+                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                    test.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                    {test.status}
+                                </span>
+                                <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-700 border border-blue-100">
+                                    {test.examType || 'computer'}
+                                </span>
+                             </div>
                             <div className="flex gap-2">
+                                {(test.examType === 'omr-scanning' || test.examType === 'hybrid') && (
+                                     <Link to={`/print-omr/${test._id}`} className="p-2 bg-white rounded-lg text-slate-400 hover:text-slate-900 border border-slate-200 transition-colors tooltip" title="Print OMR Sheet">
+                                        <Printer size={16} />
+                                    </Link>
+                                )}
                                 <Link to={`/builder/${test._id}`} className="p-2 bg-white rounded-lg text-slate-400 hover:text-slate-900 border border-slate-200 transition-colors">
                                     <Edit size={16} />
                                 </Link>

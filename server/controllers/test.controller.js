@@ -5,7 +5,7 @@ const testsCollection = db.collection('tests');
 const questionsCollection = db.collection('questions');
 
 const createTest = async (req, res) => {
-    const { title, description, duration, maxParticipants, negativeMark, questions } = req.body;
+    const { title, description, duration, maxParticipants, negativeMark, examType, questions } = req.body;
     try {
         const testData = {
             creatorId: req.user.id,
@@ -14,6 +14,7 @@ const createTest = async (req, res) => {
             duration,
             maxParticipants,
             negativeMark,
+            examType: examType || 'computer-based',
             uniqueLink: crypto.randomUUID().slice(0, 8),
             status: 'draft',
             createdAt: new Date().toISOString()
@@ -113,4 +114,14 @@ const getTestByLink = async (req, res) => {
     }
 };
 
-module.exports = { createTest, getTests, getTest, updateTest, publishTest, getTestByLink };
+const getPublishedTests = async (req, res) => {
+    try {
+        const querySnapshot = await testsCollection.where('status', '==', 'published').get();
+        const tests = querySnapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
+        res.status(200).json(tests);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching published tests', error: err.message });
+    }
+};
+
+module.exports = { createTest, getTests, getTest, updateTest, publishTest, getTestByLink, getPublishedTests };

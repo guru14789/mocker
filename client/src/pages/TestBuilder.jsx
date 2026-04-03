@@ -51,7 +51,7 @@ const PublishModal = ({ isOpen, onClose, link }) => {
 const TestBuilder = () => {
     const { testId } = useParams()
     const navigate = useNavigate()
-    const [test, setTest] = useState({ title: '', description: '', duration: 30, maxParticipants: 50, negativeMark: 0 })
+    const [test, setTest] = useState({ title: '', description: '', duration: 30, maxParticipants: 50, negativeMark: 0, examType: 'computer-based' })
     const [questions, setQuestions] = useState([])
     const [isNew, setIsNew] = useState(!testId)
     const [loading, setLoading] = useState(!!testId)
@@ -218,7 +218,7 @@ const TestBuilder = () => {
                             />
                          </div>
 
-                         <div className="grid grid-cols-3 gap-12 pt-10 border-t border-slate-50">
+                         <div className="grid grid-cols-4 gap-8 pt-10 border-t border-slate-50">
                              <div className="flex flex-col gap-2">
                                 <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none">Limit (Min)</label>
                                 <input 
@@ -245,6 +245,18 @@ const TestBuilder = () => {
                                     value={test.negativeMark}
                                     onChange={e => setTest({...test, negativeMark: e.target.value})}
                                 />
+                             </div>
+                             <div className="flex flex-col gap-2">
+                                <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none">Mode</label>
+                                <select 
+                                    className="text-sm font-black font-outfit text-slate-950 bg-slate-50 px-4 py-[11px] rounded-xl w-full focus:ring-2 ring-slate-100 outline-none appearance-none cursor-pointer"
+                                    value={test.examType}
+                                    onChange={e => setTest({...test, examType: e.target.value})}
+                                >
+                                    <option value="computer-based">🖥️ Computer</option>
+                                    <option value="omr-scanning">📑 OMR</option>
+                                    <option value="hybrid">🌓 Hybrid</option>
+                                </select>
                              </div>
                          </div>
                     </div>

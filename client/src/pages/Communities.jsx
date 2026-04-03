@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { Users, BookOpen, Search, ArrowRight, ShieldCheck } from 'lucide-react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import axios from 'axios'
 
 const Communities = () => {
     const container = React.useRef()
@@ -20,7 +21,8 @@ const Communities = () => {
             participants: "1.2k",
             difficulty: "Hard",
             color: "blue",
-            link: "react-patterns-2024"
+            link: "react-patterns-2024",
+            examType: "computer-based"
         },
         {
             id: "exam-2",
@@ -31,7 +33,8 @@ const Communities = () => {
             participants: "850",
             difficulty: "Medium",
             color: "emerald",
-            link: "med-board-review"
+            link: "med-board-review",
+            examType: "hybrid"
         },
         {
             id: "exam-3",
@@ -42,13 +45,42 @@ const Communities = () => {
             participants: "2.4k",
             difficulty: "Hard",
             color: "slate",
-            link: "cfa-level-1-mock"
+            link: "cfa-level-1-mock",
+            examType: "omr-scanning"
         }
     ];
 
+    const [exams, setExams] = React.useState(activeExams);
     const [enrolled, setEnrolled] = React.useState(["exam-2"]); // Start with one enrolled for demo
     const [modalExam, setModalExam] = React.useState(null); // Track which exam is being enrolled
     const [candidateData, setCandidateData] = React.useState({ name: '', rollNo: '' });
+
+    React.useEffect(() => {
+        const fetchExams = async () => {
+            try {
+                const res = await axios.get('http://localhost:5000/api/tests/public/published')
+                if (res.data && res.data.length > 0) {
+                    // Map API data to the format expected by the UI if necessary
+                    const formattedExams = res.data.map(test => ({
+                        id: test._id,
+                        title: test.title,
+                        community: "Open Community",
+                        time: `${test.duration}m`,
+                        questions: test.questionsCount || 0,
+                        participants: test.currentParticipants || 0,
+                        difficulty: "Medium",
+                        color: "indigo",
+                        link: test.uniqueLink,
+                        examType: test.examType
+                    }));
+                    setExams(formattedExams);
+                }
+            } catch (err) {
+                console.error('Failed to fetch exams', err)
+            }
+        }
+        fetchExams()
+    }, [])
 
     const handleEnrollClick = (exam) => {
         setModalExam(exam);
@@ -137,7 +169,7 @@ const Communities = () => {
             )}
             
             {/* Header Section */}
-            <div className="bg-slate-50 py-28 px-6">
+            <div id="explore" className="bg-slate-50 py-28 px-6">
                 <div className="max-w-6xl mx-auto flex flex-col items-center text-center space-y-8 header-content">
                     <div className="inline-flex items-center gap-3 px-6 py-2 bg-slate-900 shadow-xl shadow-slate-200 text-white rounded-full text-xs font-black uppercase tracking-[0.25em]">
                         <Users size={16} /> Global Network
@@ -172,20 +204,27 @@ const Communities = () => {
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-10 items-stretch">
-                    {activeExams.map((exam, index) => {
+                    {exams.map((exam, index) => {
                         const isEnrolled = enrolled.includes(exam.id);
                         return (
                             <div key={index} className="exam-card group bg-slate-50 border border-slate-100 p-8 rounded-[3rem] hover:bg-white hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col h-full">
                                 <div className="flex justify-between items-center mb-8 h-10">
-                                    {exam.difficulty === 'Hard' ? (
-                                        <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-100">
-                                            HARD
-                                        </div>
-                                    ) : (
-                                        <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                            MEDIUM
-                                        </div>
-                                    )}
+                                    <div className="flex gap-2">
+                                        {exam.difficulty === 'Hard' ? (
+                                            <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-100">
+                                                HARD
+                                            </div>
+                                        ) : (
+                                            <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                MEDIUM
+                                            </div>
+                                        )}
+                                        {exam.examType && (
+                                            <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                {exam.examType.replace('-', ' ')}
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-50 uppercase tracking-widest">
                                         <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
                                         LIVE

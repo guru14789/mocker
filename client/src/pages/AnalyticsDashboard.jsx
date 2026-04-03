@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { LayoutDashboard, Users, TrendingUp, AlertTriangle, ChevronLeft, Download, CheckCircle2 } from 'lucide-react'
+import { LayoutDashboard, Users, TrendingUp, AlertTriangle, ChevronLeft, Download, CheckCircle2, Upload } from 'lucide-react'
 
 const AnalyticsCard = ({ title, value, icon: Icon, subtext }) => (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
@@ -53,9 +53,14 @@ export default function AnalyticsDashboard() {
                     </button>
                     <h2 className="text-lg font-bold font-outfit text-slate-900">Test Analytics & Insights</h2>
                 </div>
-                <button className="btn-secondary py-2.5 px-6 flex items-center gap-2 text-sm font-bold border-slate-200">
-                    <Download size={18} /> Export CSV
-                </button>
+                <div className="flex items-center gap-4">
+                    <button className="px-6 py-2.5 bg-slate-950 text-white rounded-xl flex items-center gap-2 text-sm font-black shadow-lg shadow-slate-200 hover:scale-105 active:scale-95 transition-all">
+                        <Upload size={18} /> Bulk OMR Import
+                    </button>
+                    <button className="btn-secondary py-2.5 px-6 flex items-center gap-2 text-sm font-bold border-slate-200">
+                        <Download size={18} /> Export CSV
+                    </button>
+                </div>
             </header>
 
             <main className="flex-1 p-12 max-w-7xl mx-auto w-full space-y-12">

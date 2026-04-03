@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const Sidebar = () => {
-    const { logout } = useAuth()
+    const { logout, switchRole } = useAuth()
     const location = useLocation()
     const navigate = useNavigate()
 
@@ -23,7 +23,7 @@ const Sidebar = () => {
     const currentTab = new URLSearchParams(location.search).get('tab') || 'overview'
 
     return (
-        <aside className="w-80 h-screen bg-white border-r border-slate-200 flex flex-col p-8 sticky top-0">
+        <aside className="w-80 h-screen bg-white border-r border-slate-200 flex flex-col p-8 sticky top-0 overflow-y-auto">
             <div className="flex items-center gap-3 mb-12 px-4">
                 <div className="w-10 h-10 bg-slate-950 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-100">
                     <Box size={20} />
@@ -48,9 +48,35 @@ const Sidebar = () => {
                 ))}
             </nav>
 
+            <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col gap-4">
+                <span className="text-[10px] uppercase tracking-widest font-black text-slate-400 px-4">Account Mode</span>
+                <div className="relative flex bg-slate-50 p-1 rounded-xl border border-slate-100 mx-2">
+                    <div 
+                        className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#0F172A] rounded-lg transition-all duration-300 ease-out z-0 translate-x-full"
+                    />
+                    <button 
+                        type="button" 
+                        onClick={async () => {
+                            const success = await switchRole('candidate');
+                            if (success) navigate('/candidate-dashboard');
+                        }}
+                        className="relative flex-1 py-2 text-[9px] font-black uppercase tracking-widest z-10 transition-colors text-slate-400"
+                    >
+                        Candidate
+                    </button>
+                    <button 
+                        type="button" 
+                        disabled
+                        className="relative flex-1 py-2 text-[9px] font-black uppercase tracking-widest z-10 transition-colors text-white"
+                    >
+                        Examiner
+                    </button>
+                </div>
+            </div>
+
             <button 
                 onClick={handleLogout}
-                className="flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all mt-auto"
+                className="flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all"
             >
                 <LogOut size={22} />
                 Logout Sessions

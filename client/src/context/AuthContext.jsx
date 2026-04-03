@@ -75,8 +75,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const switchRole = async (newRole) => {
+    try {
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/update-role`, { role: newRole });
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+      }
+      setUser({ ...user, role: newRole });
+      return true;
+    } catch (err) {
+      console.error('Failed to switch role:', err);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loginWithGoogle, loading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, loginWithGoogle, switchRole, loading }}>
       {children}
     </AuthContext.Provider>
   );

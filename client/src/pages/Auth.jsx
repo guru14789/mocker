@@ -240,9 +240,24 @@ const Auth = () => {
                             </div>
                             <div className="space-y-1">
                                 <span className="text-[9px] uppercase tracking-widest font-black text-slate-400 ml-1">Platform Role</span>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button type="button" onClick={() => setFormData({...formData, role: 'candidate'})} className={`py-2 px-3 rounded-xl border-2 text-[9px] font-black uppercase tracking-widest transition-all ${formData.role === 'candidate' ? 'bg-[#0F172A] border-[#0F172A] text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>Candidate</button>
-                                    <button type="button" onClick={() => setFormData({...formData, role: 'creator'})} className={`py-2 px-3 rounded-xl border-2 text-[9px] font-black uppercase tracking-widest transition-all ${formData.role === 'creator' ? 'bg-[#0F172A] border-[#0F172A] text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>Creator</button>
+                                <div className="relative flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                    <div 
+                                        className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#0F172A] rounded-lg transition-all duration-300 ease-out z-0 ${formData.role === 'creator' ? 'translate-x-full' : 'translate-x-0'}`}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setFormData({...formData, role: 'candidate'})} 
+                                        className={`relative flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest z-10 transition-colors ${formData.role === 'candidate' ? 'text-white' : 'text-slate-400'}`}
+                                    >
+                                        Candidate
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setFormData({...formData, role: 'creator'})} 
+                                        className={`relative flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest z-10 transition-colors ${formData.role === 'creator' ? 'text-white' : 'text-slate-400'}`}
+                                    >
+                                        Examiner
+                                    </button>
                                 </div>
                             </div>
                             <button type="submit" disabled={loading} className="w-full bg-[#0F172A] text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-[.2em] hover:bg-slate-800 transition-all shadow-md shadow-slate-100 flex items-center justify-center group">

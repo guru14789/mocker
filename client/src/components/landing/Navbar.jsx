@@ -42,12 +42,14 @@ const Navbar = () => {
     }
   }, [isOpen])
   
-  const scrollToSection = (id) => {
+  const scrollToSection = (id, path = '/') => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     } else {
-      window.location.href = `/#${id}`;
+      // If we're not on the right page, navigate there with the hash
+      const targetPath = path === '/' ? `/#${id}` : `${path}#${id}`;
+      window.location.href = targetPath;
     }
   };
 
@@ -80,7 +82,14 @@ const Navbar = () => {
                 Pricing
               </button>
             </li>
-            <li><Link to="/communities" className="text-[15px] font-medium text-slate-600 hover:text-slate-950 transition-colors">Communities</Link></li>
+            <li>
+              <button 
+                onClick={() => scrollToSection('explore', '/communities')} 
+                className="text-[15px] font-medium text-slate-600 hover:text-slate-950 transition-colors"
+              >
+                Communities
+              </button>
+            </li>
           </ul>
 
           <div className="flex items-center gap-6 ml-4">
@@ -145,7 +154,14 @@ const Navbar = () => {
               Pricing
             </button>
           </li>
-          <li className="mobile-nav-item"><Link onClick={() => setIsOpen(false)} to="/communities" className="text-4xl font-black font-outfit text-slate-900">Communities</Link></li>
+          <li className="mobile-nav-item">
+            <button 
+              onClick={() => { scrollToSection('explore', '/communities'); setIsOpen(false); }} 
+              className="text-4xl font-black font-outfit text-slate-900"
+            >
+              Communities
+            </button>
+          </li>
         </ul>
 
         <div className="mt-auto space-y-4">

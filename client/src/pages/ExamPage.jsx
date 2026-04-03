@@ -205,6 +205,26 @@ export default function ExamPage() {
                                 <h2 className="text-3xl font-black text-slate-900 font-outfit">Preparing Assessment...</h2>
                                 <p className="text-slate-500 max-w-sm font-medium leading-relaxed italic">The secure environment is being initialized. If this persists, please refresh your browser.</p>
                             </div>
+                        ) : test.examType === 'omr-scanning' ? (
+                            <div className="h-full flex flex-col items-center justify-center text-center space-y-12 p-10">
+                                <div className="w-32 h-32 bg-indigo-50 text-indigo-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-100 rotate-3 animate-bounce">
+                                    <Printer size={64} />
+                                </div>
+                                <div className="space-y-4">
+                                    <h2 className="text-5xl font-black text-slate-900 font-outfit tracking-tight">Offline Question Paper</h2>
+                                    <p className="text-slate-500 max-w-md mx-auto font-medium leading-relaxed">
+                                        This is an OMR-based examination. Your question paper has been provided physically.
+                                    </p>
+                                </div>
+                                <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 max-w-sm w-full">
+                                    <p className="text-xs font-black uppercase tracking-widest text-[#0F172A] mb-2 text-left">How to submit:</p>
+                                    <p className="text-[10px] text-slate-400 font-bold leading-relaxed text-left">
+                                        1. Read the physical question paper.<br/>
+                                        2. Fill the bubbles on the right-hand digital OMR sheet.<br/>
+                                        3. Click "Submit Exam" once you have finished all answers.
+                                    </p>
+                                </div>
+                            </div>
                         ) : (
                             <SecureQuestionRenderer 
                                 question={currentQuestion}

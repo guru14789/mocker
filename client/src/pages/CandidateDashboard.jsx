@@ -1,9 +1,11 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { LogOut, User, BookOpen, Clock, Award, ShieldAlert } from 'lucide-react'
 
 const CandidateDashboard = () => {
-    const { user, logout } = useAuth()
+    const { user, logout, switchRole } = useAuth()
+    const navigate = useNavigate()
 
     const stats = [
         { label: 'Exams Taken', value: '0', icon: <BookOpen className="text-blue-600" /> },
@@ -14,7 +16,7 @@ const CandidateDashboard = () => {
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar Simple */}
-            <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between">
+            <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between overflow-y-auto">
                 <div className="space-y-8">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white">
@@ -30,12 +32,40 @@ const CandidateDashboard = () => {
                     </nav>
                 </div>
 
-                <button 
-                    onClick={logout}
-                    className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-600 font-bold transition-colors"
-                >
-                    <LogOut size={18} /> Logout
-                </button>
+                <div className="mt-auto space-y-4 pt-10">
+                    <div className="flex flex-col gap-2">
+                        <span className="text-[9px] uppercase tracking-widest font-black text-slate-400 ml-1">Account Mode</span>
+                        <div className="relative flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                            <div 
+                                className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#0F172A] rounded-lg transition-all duration-300 ease-out z-0 translate-x-0"
+                            />
+                            <button 
+                                type="button" 
+                                disabled
+                                className="relative flex-1 py-2 text-[9px] font-black uppercase tracking-widest z-10 transition-colors text-white"
+                            >
+                                Candidate
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={async () => {
+                                    const success = await switchRole('creator');
+                                    if (success) navigate('/dashboard');
+                                }}
+                                className="relative flex-1 py-2 text-[9px] font-black uppercase tracking-widest z-10 transition-colors text-slate-400 hover:text-slate-900"
+                            >
+                                Examiner
+                            </button>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-600 font-bold transition-colors border border-transparent hover:border-red-50 hover:bg-red-50 rounded-xl"
+                    >
+                        <LogOut size={18} /> Logout
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content */}

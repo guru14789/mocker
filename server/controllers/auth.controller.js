@@ -21,7 +21,7 @@ const register = async (req, res) => {
     });
 
     const userData = { _id: userDoc.id, name, email, role: role || 'candidate' };
-    const token = jwt.sign({ id: userDoc.id, role: userData.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '1d' });
+    const token = jwt.sign({ id: userDoc.id, role: userData.role }, process.env.JWT_SECRET || 'fallback_secret_mocker', { expiresIn: '1d' });
 
     res.status(201).json({ user: userData, token });
   } catch (err) {
@@ -62,7 +62,7 @@ const login = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found or database error' });
 
-    const token = jwt.sign({ id: user._id || user.id, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '1d' });
+    const token = jwt.sign({ id: user._id || user.id, role: user.role }, process.env.JWT_SECRET || 'fallback_secret_mocker', { expiresIn: '1d' });
     res.status(200).json({ user: { _id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {
     console.error('--- LOGIN ERROR ---');
@@ -74,12 +74,12 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
       if (req.user.id.startsWith('mock-')) {
-          const isCreator = req.user.id === 'mock-admin';
+          const isCreator = req.user.role === 'creator';
           return res.status(200).json({ 
               _id: req.user.id, 
               name: isCreator ? 'Demo Creator' : 'Demo Candidate', 
               email: isCreator ? 'admin@mocker.com' : 'student@mocker.com', 
-              role: isCreator ? 'creator' : 'candidate' 
+              role: req.user.role 
           });
       }
       const userDoc = await usersCollection.doc(req.user.id).get();
@@ -173,4 +173,27 @@ const googleAuth = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, googleAuth };
+const updateRole = async (req, res) => {
+    const { role } = req.body;
+    try {
+        let userId = req.user.id;
+        
+        if (!userId.startsWith('mock-')) {
+            await usersCollection.doc(userId).update({ role });
+        }
+        
+        // Always generate new token with updated role
+        const token = jwt.sign(
+            { id: userId, role }, 
+            process.env.JWT_SECRET || 'fallback_secret_mocker', 
+            { expiresIn: '7d' }
+        );
+        
+        res.status(200).json({ message: 'Role updated successfully', role, token });
+    } catch (err) {
+        console.error('updateRole error:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
+module.exports = { register, login, getMe, googleAuth, updateRole };

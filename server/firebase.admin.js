@@ -13,9 +13,15 @@ try {
 
     if (rawProjectId && rawPrivateKey && rawClientEmail) {
       // Clean the private key (remove quotes and handle escaped newlines)
-      const cleanPrivateKey = rawPrivateKey
-        .replace(/^"|"$/g, '') // Remove wrapping quotes
-        .replace(/\\n/g, '\n'); // Re-enable newlines
+      let cleanPrivateKey = rawPrivateKey.trim();
+      
+      // Remove wrapping quotes if they exist
+      if (cleanPrivateKey.startsWith('"') && cleanPrivateKey.endsWith('"')) {
+        cleanPrivateKey = cleanPrivateKey.substring(1, cleanPrivateKey.length - 1);
+      }
+      
+      // Replace literal \n with actual newlines
+      cleanPrivateKey = cleanPrivateKey.replace(/\\n/g, '\n');
 
       const serviceAccount = {
         projectId: rawProjectId,
@@ -23,27 +29,29 @@ try {
         clientEmail: rawClientEmail,
       };
 
+      console.log('--- FIREBASE ADMIN: ATTEMPTING INITIALIZATION ---');
+      console.log('Project ID:', rawProjectId);
+      console.log('Client Email:', rawClientEmail);
+      console.log('Key length:', cleanPrivateKey.length);
+      console.log('Key start:', cleanPrivateKey.substring(0, 50));
+      console.log('Key end:', cleanPrivateKey.substring(cleanPrivateKey.length - 50));
+
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: rawProjectId // Explicitly reinforce project ID
+        credential: admin.credential.cert(serviceAccount)
       });
       console.log('--- FIREBASE ADMIN: SUCCESSFUL INITIALIZATION ---');
     } else {
-      console.warn('--- FIREBASE ADMIN: CREDENTIALS MISSING ---');
+      console.warn('--- FIREBASE ADMIN: CREDENTIALS MISSING, USING DEFAULT ---');
       admin.initializeApp();
     }
   }
   
-  // Explicitly set projectId to avoid findAndCacheProjectId failures
   db = admin.firestore();
-  if (process.env.FIREBASE_PROJECT_ID) {
-      db.settings({ projectId: process.env.FIREBASE_PROJECT_ID });
-  }
   auth = admin.auth();
 } catch (error) {
   console.error('--- FIREBASE ADMIN: INITIALIZATION ERROR ---');
-  console.error(error.message);
-  db = null; // Ensure controllers see it is null
+  console.error(error);
+  db = null;
   auth = null;
 }
 

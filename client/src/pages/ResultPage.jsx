@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { CheckCircle2, XCircle, AlertCircle, TrendingUp, BarChart3, ArrowRight, ClipboardList } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, TrendingUp, BarChart3, ArrowRight, ClipboardList, Share2, Twitter, Linkedin, Link2, Smartphone } from 'lucide-react'
 
 const StatItem = ({ label, value, icon: Icon, color }) => (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center gap-6 shadow-sm hover:translate-y-[-4px] transition-all">
@@ -134,6 +134,56 @@ export default function ResultPage() {
                     </div>
                     <div className="relative z-10 hidden md:block">
                         <TrendingUp size={160} className="text-emerald-400 opacity-20" />
+                    </div>
+                </div>
+
+                {/* Share Section */}
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                            <Share2 size={24} />
+                        </div>
+                        <div>
+                            <h4 className="text-xl font-black font-outfit text-slate-900 leading-none mb-1">Share Your Success</h4>
+                            <p className="text-sm font-medium text-slate-500">Let your network know about your achievement.</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        <button 
+                            onClick={() => {
+                                const text = `I just scored ${result?.scoredMarks?.toFixed(1)}/${result?.totalMarks} on Mocker! 🚀 #Mocker #SmartExams`;
+                                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`, '_blank');
+                            }}
+                            className="p-4 bg-slate-50 rounded-2xl text-slate-900 border border-slate-100 hover:bg-[#1DA1F2] hover:text-white transition-all group"
+                        >
+                            <Twitter size={20} fill="currentColor" />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+                            }}
+                            className="p-4 bg-slate-50 rounded-2xl text-slate-900 border border-slate-100 hover:bg-[#0077b5] hover:text-white transition-all"
+                        >
+                            <Linkedin size={20} fill="currentColor" />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                const text = `I just scored ${result?.scoredMarks?.toFixed(1)}/${result?.totalMarks} on Mocker! 🚀 Check it out: ${window.location.href}`;
+                                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                            }}
+                            className="p-4 bg-slate-50 rounded-2xl text-slate-900 border border-slate-100 hover:bg-[#25D366] hover:text-white transition-all"
+                        >
+                            <Smartphone size={20} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                navigator.clipboard.writeText(window.location.href);
+                                alert('Link copied to clipboard!');
+                            }}
+                            className="flex items-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                        >
+                            <Link2 size={18} /> Copy Link
+                        </button>
                     </div>
                 </div>
 

@@ -9,7 +9,7 @@ const protect = (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Not authorized' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_mocker');
     req.user = decoded;
     next();
   } catch (err) {
