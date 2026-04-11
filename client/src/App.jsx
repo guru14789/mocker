@@ -10,7 +10,9 @@ import ResultPage from './pages/ResultPage'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import CandidateDashboard from './pages/CandidateDashboard'
 import PrintOMR from './pages/PrintOMR'
+import OMRScannerPage from './pages/OMRScannerPage'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import DebugOMR from './pages/DebugOMR'
 import './index.css'
 
 function App() {
@@ -33,7 +35,10 @@ function App() {
            <ProtectedRoute role="creator"><AnalyticsDashboard /></ProtectedRoute>
           } />
           <Route path="/print-omr/:testId" element={
-            <ProtectedRoute role="creator"><PrintOMR /></ProtectedRoute>
+            <ProtectedRoute><PrintOMR /></ProtectedRoute>
+          } />
+          <Route path="/scan-omr/:testId" element={
+            <ProtectedRoute><OMRScannerPage /></ProtectedRoute>
           } />
 
           <Route path="/exam/:uniqueLink" element={
@@ -45,6 +50,7 @@ function App() {
           <Route path="/candidate-dashboard" element={
             <ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>
           } />
+          <Route path="/debug-omr" element={<DebugOMR />} />
         </Routes>
       </div>
     </Router>

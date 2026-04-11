@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Link as LinkIcon, Edit, BarChart3, Copy, Printer } from 'lucide-react'
+import { Link as LinkIcon, Edit, BarChart3, Copy, Printer, Camera } from 'lucide-react'
 
 const TestsTab = ({ tests }) => {
     const copyLink = (link) => {
@@ -27,9 +27,14 @@ const TestsTab = ({ tests }) => {
                              </div>
                             <div className="flex gap-2">
                                 {(test.examType === 'omr-scanning' || test.examType === 'hybrid') && (
-                                     <Link to={`/print-omr/${test._id}`} className="p-2 bg-white rounded-lg text-slate-400 hover:text-slate-900 border border-slate-200 transition-colors tooltip" title="Print OMR Sheet">
-                                        <Printer size={16} />
-                                    </Link>
+                                     <div className="flex gap-2">
+                                         <Link to={`/print-omr/${test._id}`} className="p-2 bg-white rounded-lg text-slate-400 hover:text-slate-900 border border-slate-200 transition-colors tooltip" title="Print OMR Sheet">
+                                            <Printer size={16} />
+                                        </Link>
+                                        <Link to={`/scan-omr/${test._id}`} className="p-2 bg-white rounded-lg text-indigo-400 hover:text-indigo-900 border border-indigo-100/50 transition-colors tooltip" title="Scan Completed OMR">
+                                            <Camera size={16} />
+                                        </Link>
+                                     </div>
                                 )}
                                 <Link to={`/builder/${test._id}`} className="p-2 bg-white rounded-lg text-slate-400 hover:text-slate-900 border border-slate-200 transition-colors">
                                     <Edit size={16} />

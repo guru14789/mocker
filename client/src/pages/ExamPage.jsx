@@ -4,6 +4,7 @@ import axios from 'axios'
 import { OMRSheet } from '../components/exam/OMRSheet'
 import { Timer } from '../components/exam/Timer'
 import { useProctor } from '../hooks/useProctor'
+import { useAuth } from '../context/AuthContext'
 import { SecureQuestionRenderer } from '../components/exam/SecureQuestionRenderer'
 import { ChevronLeft, ChevronRight, Send, AlertCircle, TrendingUp, CheckCircle, XCircle, Shield, Camera } from 'lucide-react'
 import gsap from 'gsap'
@@ -89,6 +90,7 @@ export default function ExamPage() {
     const [isGrading, setIsGrading] = useState(false)
     const [violation, setViolation] = useState(null)
     const [isTerminated, setIsTerminated] = useState(false)
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
 
     useEffect(() => {
         const startSession = async () => {
@@ -142,9 +144,12 @@ export default function ExamPage() {
     }
 
     const handleSubmit = async () => {
-        if (window.confirm('Are you sure you want to submit the exam?')) {
-            setIsGrading(true)
-        }
+        setShowSubmitConfirm(true)
+    }
+
+    const confirmSubmit = () => {
+        setIsGrading(true)
+        setShowSubmitConfirm(false)
     }
 
     const onGradingComplete = async () => {
@@ -176,20 +181,24 @@ export default function ExamPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50 md:overflow-hidden font-sans">
-            <header className="h-auto py-4 md:h-20 bg-white border-b border-slate-200 px-6 md:px-10 flex flex-col md:flex-row items-center justify-between shrink-0 gap-4">
+            <header className="h-auto py-2 md:py-0 md:h-20 bg-white border-b border-slate-200 px-4 md:px-10 flex flex-col md:flex-row items-center justify-between shrink-0 gap-3">
                 <div className="flex flex-col">
-                    <h1 className="text-xl font-black font-outfit uppercase tracking-wider text-slate-900">{test?.title}</h1>
-                    <span className="text-xs font-bold text-slate-400">SESSION ID: {session?._id.slice(-8)}</span>
+                    <h1 className="text-base md:text-xl font-black font-outfit uppercase tracking-wider text-slate-900 leading-tight truncate max-w-[200px] md:max-w-md">
+                        {test?.id?.includes('mock') ? test.title : (test?.title || 'Assessment Environment')}
+                    </h1>
+                    <span className="text-[9px] font-bold text-slate-400">SESSION ID: {session?._id.slice(-8)}</span>
                 </div>
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-3 pr-6 border-r border-slate-100">
+                <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto justify-between md:justify-end">
+                    <div className="hidden lg:flex items-center gap-3 pr-6 border-r border-slate-100">
                         <Camera size={20} className="text-indigo-500 animate-pulse" />
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Proctoring Active</span>
                     </div>
-                    <Timer durationMinutes={test?.duration || 30} onTimeUp={handleSubmit} onWarning={(msg) => alert(msg)} />
-                    <button onClick={handleSubmit} className="btn-primary py-2 md:py-3 px-6 md:px-8 flex items-center gap-2 font-bold shadow-lg shadow-slate-200 text-sm">
-                        Submit <span className="hidden md:inline">Exam</span> <Send size={16} />
-                    </button>
+                    <div className="flex items-center gap-2 md:gap-4 flex-1 md:flex-initial justify-end">
+                        <Timer durationMinutes={test?.duration || 30} onTimeUp={confirmSubmit} onWarning={(msg) => console.log('Timer Warning:', msg)} />
+                        <button onClick={handleSubmit} className="btn-primary py-2.5 md:py-3 px-5 md:px-8 flex items-center gap-2 font-bold shadow-lg shadow-slate-200 text-xs md:text-sm">
+                            Submit <span className="hidden md:inline">Exam</span> <Send size={16} />
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -317,10 +326,28 @@ export default function ExamPage() {
                 </div>
             )}
 
+            {showSubmitConfirm && (
+                <div className="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-8 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[3rem] p-12 max-w-sm w-full text-center shadow-2xl relative overflow-hidden border border-slate-100">
+                        <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+                            <Send size={40} strokeWidth={2.5} className="rotate-[-12deg]" />
+                        </div>
+                        <h3 className="text-2xl font-black font-outfit text-slate-900 mb-4 tracking-tight">Final Submission?</h3>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed mb-10">Review your digitally filled OMR sheet carefully. Once submitted, you cannot modify your answers.</p>
+                        <div className="flex gap-4">
+                            <button onClick={() => setShowSubmitConfirm(false)} className="flex-1 py-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] hover:text-slate-900 transition-all">Cancel</button>
+                            <button onClick={confirmSubmit} className="flex-[2] bg-[#0F172A] text-white py-4 rounded-2xl font-black text-sm hover:scale-[1.02] shadow-2xl shadow-indigo-100/40 transition-all">Yes, Submit</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isGrading && (
                 <GradingOverlay 
                     questions={questions} 
                     answers={answers} 
+                    test={test}
+                    session={session}
                     onComplete={onGradingComplete} 
                 />
             )}
@@ -328,8 +355,9 @@ export default function ExamPage() {
     )
 }
 
-const GradingOverlay = ({ questions, answers, onComplete }) => {
+const GradingOverlay = ({ questions, answers, test, session, onComplete }) => {
     const container = React.useRef()
+    const { user } = useAuth()
     const [currentScore, setCurrentScore] = useState(0)
     const [currentIndex, setCurrentIndex] = useState(-1)
     
@@ -338,7 +366,7 @@ const GradingOverlay = ({ questions, answers, onComplete }) => {
             onComplete: () => {
                 gsap.to(container.current, {
                     opacity: 0,
-                    delay: 1,
+                    delay: 2,
                     duration: 0.5,
                     onComplete
                 })
@@ -347,16 +375,22 @@ const GradingOverlay = ({ questions, answers, onComplete }) => {
 
         // Initial entrance
         tl.from('.grading-card', {
-            scale: 0.8,
-            y: 50,
-            duration: 0.8,
-            ease: 'back.out(1.7)'
+            x: -100,
+            opacity: 0,
+            duration: 1,
+            ease: 'power4.out'
         })
+        tl.from('.omr-preview', {
+            x: 100,
+            opacity: 0,
+            duration: 1,
+            ease: 'power4.out'
+        }, '<')
 
         // Staggered grading
         questions.forEach((q, idx) => {
             tl.to({}, {
-                duration: 0.4,
+                duration: 0.25,
                 onStart: () => {
                     setCurrentIndex(idx)
                     const selected = answers[idx]
@@ -368,91 +402,287 @@ const GradingOverlay = ({ questions, answers, onComplete }) => {
             
             tl.from(`.row-${idx}`, {
                 x: -20,
-                duration: 0.3,
+                duration: 0.2,
                 ease: 'power2.out'
             }, '<')
 
             tl.to(`.status-${idx}`, {
                 scale: 1,
                 opacity: 1,
-                duration: 0.3,
+                duration: 0.2,
                 ease: 'back.out(2)'
-            }, '>-0.1')
+            }, '>-0.05')
+
+            // Pulse the OMR bubble if it exists
+            if (answers && answers[idx]) {
+                tl.to(`.bubble-${idx}-${answers[idx]}`, {
+                    scale: 1.3,
+                    duration: 0.2,
+                    repeat: 1,
+                    yoyo: true
+                }, '<')
+            }
         })
 
     }, { scope: container })
 
     return (
-        <div ref={container} className="fixed inset-0 z-[100] bg-[#0F172A]/90 backdrop-blur-xl flex items-center justify-center p-8">
-            <div className="grading-card w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Score Header */}
-                <div className="bg-[#0F172A] p-10 text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-                    <p className="text-slate-400 text-xs font-black uppercase tracking-[0.3em] mb-2">Automated Grading Engine</p>
-                    <div className="flex items-center justify-center gap-4">
-                         <h2 className="text-6xl font-black font-outfit text-white tabular-nums">
-                            {currentScore.toFixed(0)}
-                        </h2>
-                        <div className="text-left">
-                            <p className="text-indigo-400 text-xs font-bold leading-none">TOTAL</p>
-                            <p className="text-indigo-400 text-xs font-bold leading-none">SCORE</p>
+        <div ref={container} className="fixed inset-0 z-[100] bg-[#0F172A]/98 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden">
+            {/* Background Digital Rain / Grid */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#d81b60 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row w-full max-w-7xl h-full max-h-[900px] gap-8 relative z-10">
+                {/* Left: Logic Audit */}
+                <div className="grading-card flex-1 bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-white/10">
+                    <div className="bg-[#0F172A] p-10 text-center relative overflow-hidden shrink-0">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em] mb-4">Grading Intelligence Engine</p>
+                        <div className="flex items-center justify-center gap-6">
+                            <div className="relative">
+                                <h2 className="text-7xl font-black font-outfit text-white tabular-nums drop-shadow-2xl">
+                                    {(currentScore || 0).toFixed(0)}
+                                </h2>
+                            </div>
+                            <div className="text-left border-l border-white/10 pl-6">
+                                <p className="text-indigo-400 text-[10px] font-black tracking-widest leading-tight">AUTHENTICATED</p>
+                                <p className="text-white text-lg font-black font-outfit leading-none mt-1">SCORE</p>
+                            </div>
                         </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-10 space-y-4 custom-scrollbar bg-slate-50/50">
+                        {(questions || []).map((q, idx) => {
+                            const isCorrect = answers[idx] === q.correct;
+                            const isActive = idx === currentIndex;
+                            const isDone = idx <= currentIndex;
+                            
+                            return (
+                                <div 
+                                    key={idx} 
+                                    className={`row-${idx} flex items-center justify-between p-5 rounded-[1.5rem] transition-all duration-300 border
+                                        ${isActive ? 'bg-white border-indigo-200 scale-[1.03] shadow-lg ring-4 ring-indigo-50' : 'bg-white/50 border-slate-100'}
+                                        ${isDone ? 'opacity-100' : 'opacity-20'}`}
+                                >
+                                    <div className="flex items-center gap-8">
+                                        <span className="text-[10px] font-black text-slate-300 w-6 uppercase tracking-widest italic">{String(idx + 1).padStart(2, '0')}</span>
+                                        <div className="flex gap-2">
+                                            {['A', 'B', 'C', 'D'].map(label => (
+                                                <div 
+                                                    key={label}
+                                                    className={`w-9 h-9 rounded-xl border-2 flex items-center justify-center text-xs font-black transition-all
+                                                        ${answers[idx] === label 
+                                                            ? (isDone ? (isCorrect ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-100') : 'bg-slate-900 border-slate-900 text-white')
+                                                            : 'border-slate-100 text-slate-200'}`}
+                                                >
+                                                    {label}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className={`status-${idx} opacity-0 scale-50 shrink-0`}>
+                                        {isCorrect ? (
+                                            <div className="flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-[0.1em]">
+                                                <CheckCircle size={14} strokeWidth={3} /> PASSED +{q.marks}
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 text-red-500 font-black text-[10px] uppercase tracking-[0.1em]">
+                                                <XCircle size={14} strokeWidth={3} /> FAIL
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
 
-                {/* Progress List */}
-                <div className="flex-1 overflow-y-auto p-10 space-y-3 custom-scrollbar">
-                    {questions.map((q, idx) => {
-                        const isCorrect = answers[idx] === q.correct;
-                        const isActive = idx === currentIndex;
-                        const isDone = idx <= currentIndex;
-                        
-                        return (
-                            <div 
-                                key={idx} 
-                                className={`row-${idx} flex items-center justify-between p-4 rounded-2xl transition-all duration-300 border
-                                    ${isActive ? 'bg-slate-50 border-slate-200 scale-[1.02] shadow-sm' : 'border-transparent'}
-                                    ${isDone ? 'opacity-100' : 'opacity-20'}`}
-                            >
-                                <div className="flex items-center gap-6">
-                                    <span className="text-xs font-black text-slate-300 w-6 uppercase tracking-widest">Q{idx + 1}</span>
-                                    <div className="flex gap-2">
-                                        {['A', 'B', 'C', 'D'].map(label => (
-                                            <div 
-                                                key={label}
-                                                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[10px] font-black
-                                                    ${answers[idx] === label 
-                                                        ? (isDone ? (isCorrect ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-red-500 border-red-500 text-white') : 'bg-slate-900 border-slate-900 text-white')
-                                                        : 'border-slate-100 text-slate-200'}`}
-                                            >
-                                                {label}
+                {/* Right: Digital OMR Twin (Advanced Debug Template) */}
+                <div className="omr-preview flex-[1.4] bg-white rounded-[3rem] shadow-2xl p-10 border-[3px] border-[#d81b60] hidden lg:flex flex-col relative overflow-hidden text-[#d81b60]">
+                    {/* Corner Alignment Markers (Fiducials) */}
+                    <div className="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-slate-900"></div>
+                    <div className="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-slate-900"></div>
+                    <div className="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-slate-900"></div>
+                    <div className="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-slate-900"></div>
+
+                    {/* AI Vision HUD Elements */}
+                    <div className="absolute top-10 right-20 text-[8px] font-mono font-black opacity-40 text-right space-y-1">
+                        <p>VISION_ENGINE: V2.4.RC</p>
+                        <p>LATENCY: 12ms</p>
+                        <p>SYNC_LOCK: OK</p>
+                    </div>
+
+                    {/* Security Micro-Text Watermark */}
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 -rotate-12 opacity-[0.04] pointer-events-none select-none">
+                        <div className="text-[120px] font-black whitespace-nowrap font-outfit uppercase">OFFICIAL OMR AUTHENTICATED</div>
+                        <div className="text-[120px] font-black whitespace-nowrap font-outfit uppercase">OFFICIAL OMR AUTHENTICATED</div>
+                    </div>
+
+                    <div className="relative z-10 flex-1 flex flex-col">
+                        <div className="border-[1.5px] border-[#d81b60] mb-6 rounded-2xl overflow-hidden shrink-0">
+                            <div className="bg-[#fff0f3] border-b border-[#d81b60] py-4 text-center px-6">
+                                <h1 className="text-2xl font-black font-outfit uppercase tracking-[0.2em] leading-none mb-1">
+                                    {test?.organization || "OFFICIAL EXAMINATION BUREAU"}
+                                </h1>
+                                <p className="text-[9px] font-black tracking-widest opacity-70">SECURE OMR ANSWER SHEET • PART - 1</p>
+                            </div>
+                            <div className="flex bg-white text-[8px] font-black border-b border-[#d81b60]">
+                                <div className="flex-1 py-3 px-4 border-r border-[#d81b60]">EXAM TITLE: {test?.title || 'GENERAL ASSESSMENT'}</div>
+                                <div className="flex-1 py-3 px-4 bg-[#fff0f3]">CANDIDATE: {user?.name || 'GUEST CANDIDATE'}</div>
+                            </div>
+                        </div>
+
+                        {/* Metadata Mock (Roll Number & Codes) */}
+                        <div className="grid grid-cols-[180px_1fr_120px] gap-6 mb-8 h-[160px] shrink-0">
+                             {/* Roll Number Grid */}
+                             <div className="border-[1.5px] border-[#d81b60] rounded-xl flex flex-col bg-white overflow-hidden">
+                                <div className="bg-[#fff0f3] text-[8px] font-black py-1.5 text-center border-b border-[#d81b60] tracking-widest">ROLL NUMBER</div>
+                                <div className="flex-1 flex p-1.5 gap-[1px]">
+                                   {[...Array(6)].map((_, col) => (
+                                     <div key={col} className="flex-1 flex flex-col gap-[1px] opacity-40">
+                                        <div className="h-4 border-b border-[#ffd1dc] bg-slate-50 mb-1"></div>
+                                        {[...Array(10)].map((_, row) => (
+                                          <div key={row} className="flex-1 flex items-center justify-center">
+                                            <div className="w-[10px] h-[10px] rounded-full border border-[#d81b60] text-[5px] flex items-center justify-center font-black">
+                                               {row}
                                             </div>
+                                          </div>
                                         ))}
+                                     </div>
+                                   ))}
+                                </div>
+                             </div>
+
+                             {/* Booklet & Info */}
+                             <div className="flex flex-col gap-4">
+                                <div className="border-[1.5px] border-[#d81b60] rounded-xl h-[65px] flex flex-col bg-white overflow-hidden">
+                                   <div className="bg-[#fff0f3] text-[8px] font-black py-1.5 text-center border-b border-[#d81b60] uppercase tracking-widest">Booklet Number</div>
+                                   <div className="flex-1 flex p-3 items-center justify-center gap-1.5">
+                                      {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="w-6 h-6 border-[1.5px] border-[#d81b60] bg-slate-50 rounded-sm"></div>
+                                      ))}
+                                   </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 flex-1">
+                                    <div className="border-[1.5px] border-[#d81b60] rounded-xl flex flex-col bg-white overflow-hidden">
+                                        <div className="bg-[#fff0f3] text-[7.5px] font-black py-1 px-1 text-center border-b border-[#d81b60] uppercase italic">Series</div>
+                                        <div className="flex-1 flex items-center justify-center gap-2">
+                                            {['A', 'B', 'C', 'D'].map(l => (
+                                                <div key={l} className="w-5 h-5 rounded-full border border-[#d81b60] text-[7px] font-black flex items-center justify-center opacity-40">{l}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="border-[1.5px] border-[#d81b60] rounded-xl flex flex-col bg-white overflow-hidden">
+                                        <div className="bg-[#fff0f3] text-[7.5px] font-black py-1 px-1 text-center border-b border-[#d81b60] uppercase italic">Code</div>
+                                        <div className="flex-1 flex items-center justify-center">
+                                            <div className="w-8 h-8 font-mono font-black text-xl flex items-center justify-center">#{session?._id?.slice(-2).toUpperCase() || 'X1'}</div>
+                                        </div>
                                     </div>
                                 </div>
+                             </div>
 
-                                <div className={`status-${idx} opacity-0 scale-50 shrink-0`}>
-                                    {isCorrect ? (
-                                        <div className="flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-wider">
-                                            <CheckCircle size={14} strokeWidth={3} /> Correct +{q.marks}
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2 text-red-500 font-black text-[10px] uppercase tracking-wider">
-                                            <XCircle size={14} strokeWidth={3} /> Incorrect
-                                        </div>
-                                    )}
+                             {/* Barcode Mock */}
+                             <div className="flex flex-col gap-4">
+                                <div className="flex-1 border-[1.5px] border-[#d81b60] rounded-xl bg-white p-3 flex flex-col justify-between">
+                                    <div className="space-y-[1px] opacity-80">
+                                        {[...Array(30)].map((_, i) => (
+                                            <div key={i} className="bg-[#d81b60]" style={{ height: `${[1,2,4,1,3][i%5]}px`, width: '100%' }}></div>
+                                        ))}
+                                    </div>
+                                    <div className="text-[7px] font-mono font-black text-center mt-2 tracking-tighter">SECURE-SESSION-{session?._id?.slice(-6).toUpperCase()}</div>
                                 </div>
-                            </div>
-                        )
-                    })}
-                </div>
+                             </div>
+                        </div>
 
-                <div className="p-8 bg-slate-50 border-t border-slate-100 text-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">
-                        Verifying responses with secure proctoring data...
-                    </p>
+                        {/* OMR Question Body */}
+                        <div className="flex-1 bg-white p-10 rounded-[2.5rem] shadow-inner border-[2px] border-[#ffd1dc]">
+                             <div className="grid grid-cols-2 gap-12 h-full content-start">
+                                {Array.from({ length: 2 }).map((_, col) => {
+                                    const safeQuestions = questions || [];
+                                    const colSize = Math.ceil(safeQuestions.length / 2) || 1;
+                                    return (
+                                        <div key={col} className="space-y-3">
+                                            <div className="flex justify-between items-center px-4 mb-2">
+                                                <span className="text-[7px] font-black opacity-30 uppercase tracking-[0.2em]">Q. No</span>
+                                                <span className="text-[7px] font-black opacity-30 uppercase tracking-[0.2em]">Response</span>
+                                            </div>
+                                            {safeQuestions.slice(col * colSize, (col + 1) * colSize).map((q, qidx) => {
+                                                const actualIdx = col * colSize + qidx;
+                                                const isAnalyzed = actualIdx <= currentIndex;
+                                                const isActive = actualIdx === currentIndex;
+                                                return (
+                                                        <div className="flex items-center gap-8 px-6 py-2 rounded-xl transition-all duration-300 relative group overflow-visible">
+                                                            {/* AI Bounding Box (Only on active/analyzed rows) */}
+                                                            {isAnalyzed && (
+                                                                <div className={`absolute inset-0 border-2 rounded-xl pointer-events-none transition-all duration-300 
+                                                                    ${isActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-emerald-500/20'}`}>
+                                                                    <div className={`absolute -top-3 left-2 px-1 text-[6px] font-black uppercase tracking-tighter
+                                                                        ${isActive ? 'text-indigo-600' : 'text-emerald-600/40'}`}>
+                                                                        {isActive ? '[REALTIME_AUDIT]' : '[OBJECT_IDENTIFIED]'}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            <span className="text-[11px] font-black text-[#d81b60] w-5 italic relative z-10">{String(actualIdx + 1).padStart(2, '0')}.</span>
+                                                            <div className="flex gap-5 relative z-10">
+                                                                {['A', 'B', 'C', 'D'].map(label => {
+                                                                    const isUserSelect = answers && answers[actualIdx] === label;
+                                                                    return (
+                                                                        <div key={label} className="relative">
+                                                                             <div className={`w-7 h-7 rounded-full border-[1.5px] border-[#d81b60] flex items-center justify-center text-[9px] font-black transition-all duration-300
+                                                                                ${isAnalyzed && isUserSelect ? 'bg-[#d81b60] border-[#d81b60] text-white scale-110 shadow-lg' : 'text-[#d81b60]'}`}>
+                                                                                {label}
+                                                                            </div>
+                                                                            {/* Confidence Readout on active bubble */}
+                                                                            {isActive && isUserSelect && (
+                                                                                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[6px] font-black text-indigo-600 animate-pulse">
+                                                                                    CONF: 0.9984
+                                                                                </div>
+                                                                            )}
+                                                                            {isAnalyzed && isUserSelect && (
+                                                                                <div className={`bubble-${actualIdx}-${label} absolute inset-0 rounded-full bg-[#d81b60] pointer-events-none opacity-20 -z-10`} />
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )
+                                })}
+                             </div>
+                        </div>
+
+                        {/* Footer Markers */}
+                        <div className="mt-8 flex justify-between items-center px-2">
+                             <div className="flex gap-2">
+                                {[...Array(6)].map((_, i) => <div key={i} className="w-4 h-4 bg-[#d81b60]"></div>)}
+                             </div>
+                             <div className="text-[9px] font-black italic tracking-widest opacity-40">MOCKER OMR INTERFACE • {test?.organizationCode || 'OFFICIAL'}</div>
+                             <div className="flex gap-2">
+                                {[...Array(6)].map((_, i) => <div key={i} className="w-4 h-4 bg-[#d81b60]"></div>)}
+                             </div>
+                        </div>
+                    </div>
+
+                    {/* Scanner line animation (Red Laser) */}
+                    <div className="absolute inset-x-0 h-1.5 bg-[#d81b60] shadow-[0_0_20px_#d81b60] top-0 animate-scanning-line opacity-40 z-20"></div>
                 </div>
             </div>
+
+            <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes scanning-line {
+                    0% { top: 0% }
+                    100% { top: 100% }
+                }
+                .animate-scanning-line {
+                    animation: scanning-line 3s linear infinite;
+                }
+            `}} />
         </div>
     )
 }

@@ -195,6 +195,76 @@ export default function ResultPage() {
                     <StatItem label="Unattempted" value={result?.unattempted} icon={AlertCircle} color="bg-amber-500" />
                 </div>
 
+                {/* Detailed Review Section */}
+                <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 p-8 md:p-12 shadow-sm">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+                        <div>
+                            <h3 className="text-3xl font-black font-outfit text-slate-900 flex items-center gap-4">
+                                <ClipboardList size={32} className="text-slate-400" /> Question Review
+                            </h3>
+                            <p className="text-slate-500 font-medium text-sm mt-1">Review your responses and identify areas for improvement.</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <span className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">Correct: {result?.correct}</span>
+                            <span className="px-4 py-2 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">Incorrect: {result?.incorrect}</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        {(location.state?.questions || []).map((q, idx) => {
+                            const userAnswer = location.state?.answers[idx];
+                            const isCorrect = userAnswer === q.correct;
+                            const isSkipped = !userAnswer;
+
+                            return (
+                                <div key={idx} className={`p-8 rounded-[2rem] border transition-all ${isCorrect ? 'bg-emerald-50/30 border-emerald-100' : isSkipped ? 'bg-slate-50 border-slate-100' : 'bg-red-50/30 border-red-100'}`}>
+                                    <div className="flex justify-between items-start mb-4 gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xs font-black text-slate-900 shadow-sm">
+                                                {idx + 1}
+                                            </span>
+                                            <h4 className="text-lg font-bold text-slate-900 leading-tight">{q.questionText}</h4>
+                                        </div>
+                                        {isSkipped ? (
+                                            <span className="px-3 py-1 bg-slate-200 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">Skipped</span>
+                                        ) : isCorrect ? (
+                                            <span className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-tighter flex items-center gap-1">
+                                                <CheckCircle2 size={10} /> Correct
+                                            </span>
+                                        ) : (
+                                            <span className="px-3 py-1 bg-red-500 text-white rounded-lg text-[9px] font-black uppercase tracking-tighter flex items-center gap-1">
+                                                <XCircle size={10} /> Incorrect
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                        <div className="p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Your Answer</p>
+                                            <p className={`text-sm font-black ${isSkipped ? 'text-slate-400 italic' : isCorrect ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                {userAnswer ? `${userAnswer}. ${q.options?.find(o => o.label === userAnswer)?.text || ''}` : 'No answer provided'}
+                                            </p>
+                                        </div>
+                                        <div className="p-5 bg-white rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
+                                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Correct Answer</p>
+                                            <p className="text-sm font-black text-slate-900">
+                                                {q.correct}. {q.options?.find(o => o.label === q.correct)?.text || ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    {q.explanation && (
+                                        <div className="mt-6 p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-sm text-indigo-900 leading-relaxed italic">
+                                            <span className="font-black text-[10px] uppercase tracking-widest block mb-1 opacity-60">Explanation</span>
+                                            {q.explanation}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+                {/* Topic Performance Section */}
                 <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 p-8 md:p-12 shadow-sm">
                     <h3 className="text-3xl font-black font-outfit text-slate-900 mb-8 flex items-center gap-4">
                         <BarChart3 size={32} className="text-slate-400" /> Topic Performance

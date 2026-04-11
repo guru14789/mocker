@@ -59,16 +59,19 @@ export function SecureQuestionRenderer({ question, questionNumber, selectedOptio
         if (!question) return
         const canvas = canvasRef.current
         const rect = canvas.getBoundingClientRect()
-        const scaleX = canvas.width / rect.width
         const scaleY = canvas.height / rect.height
-        const y = (e.clientX - rect.left) * scaleY
+        const canvasY = (e.clientY - rect.top) * scaleY
 
-        if (y >= 100 && y < 100 + question.options.length * 60) {
-            const idx = Math.floor((y - 100) / 60)
-            if (question.options[idx]) {
-                onSelect(question.options[idx].label)
+        // Hit detection matching the rendering logic (120 + idx * 60)
+        question.options.forEach((opt, idx) => {
+            const centerY = 120 + idx * 60
+            const top = centerY - 25
+            const bottom = centerY + 25
+            
+            if (canvasY >= top && canvasY <= bottom) {
+                onSelect(opt.label)
             }
-        }
+        })
     }
 
     if (!question) {

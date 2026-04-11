@@ -14,7 +14,16 @@ export default function PrintOMR() {
     const fetchTest = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/tests/${testId}`);
-        setTest(res.data.test);
+        const fetchedTest = res.data.test;
+
+        // VALIDATION: Only allow OMR printing for suitable exam types
+        if (fetchedTest.examType !== 'omr-scanning' && fetchedTest.examType !== 'hybrid') {
+          console.error('Invalid exam type for OMR printing');
+          navigate('/dashboard');
+          return;
+        }
+
+        setTest(fetchedTest);
         setQuestions(res.data.questions);
       } catch (err) {
         console.error('Failed to fetch test for OMR', err);
@@ -23,7 +32,7 @@ export default function PrintOMR() {
       }
     };
     fetchTest();
-  }, [testId]);
+  }, [testId, navigate]);
 
   if (loading) return <div className="h-screen flex items-center justify-center font-bold">Generating OMR Template...</div>;
   if (!test) return <div className="h-screen flex items-center justify-center font-bold text-red-500">Test not found.</div>;

@@ -2,7 +2,7 @@ import React from 'react'
 import Navbar from '../components/landing/Navbar'
 import Footer from '../components/landing/Footer'
 import { Link } from 'react-router-dom'
-import { Users, BookOpen, Search, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Users, BookOpen, Search, ArrowRight, ShieldCheck, Printer, Camera } from 'lucide-react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import axios from 'axios'
@@ -252,19 +252,44 @@ const Communities = () => {
                                 </div>
                                 
                                 {isEnrolled ? (
-                                    <Link to={`/exam/${exam.link}`} className="block w-full mt-auto">
-                                        <button className="w-full py-4 bg-slate-900 text-white rounded-[1.25rem] text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-slate-200">
-                                            Join Exam
-                                        </button>
-                                    </Link>
-                                ) : (
-                                    <button 
-                                        onClick={() => handleEnrollClick(exam)}
-                                        className="w-full py-4 mt-auto bg-white border-2 border-slate-100 text-slate-400 rounded-[1.25rem] text-xs font-black uppercase tracking-widest hover:border-slate-900 hover:text-slate-900 transition-all shadow-sm"
-                                    >
-                                        Enroll Now
-                                    </button>
-                                )}
+                                     <div className="flex flex-col gap-3 mt-auto">
+                                         <Link to={`/exam/${exam.link}`} className="block w-full">
+                                             <button className="w-full py-4 bg-slate-900 text-white rounded-[1.25rem] text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-slate-200">
+                                                 Join Exam
+                                             </button>
+                                         </Link>
+                                         {(exam.examType === 'omr-scanning' || exam.examType === 'hybrid') && (
+                                             <div className="grid grid-cols-2 gap-3">
+                                                 <Link to={`/print-omr/${exam.id}`} target="_blank" className="flex-1">
+                                                     <button className="w-full py-3 bg-white border border-slate-200 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-slate-900 transition-all flex items-center justify-center gap-2">
+                                                         <Printer size={14} /> Print OMR
+                                                     </button>
+                                                 </Link>
+                                                 <Link to={`/scan-omr/${exam.id}`} className="flex-1">
+                                                     <button className="w-full py-3 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2">
+                                                         <Camera size={14} /> Scan OMR
+                                                     </button>
+                                                 </Link>
+                                             </div>
+                                         )}
+                                     </div>
+                                 ) : (
+                                     <div className="flex flex-col gap-3 mt-auto">
+                                         <button 
+                                             onClick={() => handleEnrollClick(exam)}
+                                             className="w-full py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-[1.25rem] text-xs font-black uppercase tracking-widest hover:border-slate-900 hover:text-slate-900 transition-all shadow-sm"
+                                         >
+                                             Enroll Now
+                                         </button>
+                                         {(exam.examType === 'omr-scanning' || exam.examType === 'hybrid') && (
+                                            <Link to={`/print-omr/${exam.id}`} target="_blank" className="block w-full">
+                                                <button className="w-full py-3 bg-slate-50 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-slate-700 transition-all flex items-center justify-center gap-2 italic">
+                                                    <Printer size={14} /> Sample OMR Sheet
+                                                </button>
+                                            </Link>
+                                         )}
+                                     </div>
+                                 )}
                             </div>
                         );
                     })}

@@ -102,6 +102,19 @@ const publishTest = async (req, res) => {
 
 const getTestByLink = async (req, res) => {
     try {
+        // MOCK FALLBACK for Community Demo Links
+        if (req.params.link === 'med-board-review' || req.params.link === 'cfa-level-1-mock' || req.params.link === 'react-patterns-2024') {
+            const mockTest = {
+                _id: 'mock-test-' + req.params.link,
+                title: req.params.link === 'med-board-review' ? 'Internal Medicine Board Review' : 
+                       req.params.link === 'cfa-level-1-mock' ? 'CFA Level I Mock Exam' : 'Advanced React Patterns',
+                duration: 120,
+                examType: req.params.link === 'cfa-level-1-mock' ? 'omr-scanning' : 'hybrid',
+                status: 'published'
+            };
+            return res.status(200).json({ test: mockTest, questions: [] });
+        }
+
         const querySnapshot = await testsCollection.where('uniqueLink', '==', req.params.link).where('status', '==', 'published').limit(1).get();
         if (querySnapshot.empty) return res.status(404).json({ message: 'Exam not found or not published' });
         
@@ -110,6 +123,7 @@ const getTestByLink = async (req, res) => {
         const questions = questionsSnapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
         res.status(200).json({ test: { _id: testDoc.id, ...testDoc.data() }, questions });
     } catch (err) {
+        console.error('Fetch test by link error:', err);
         res.status(500).json({ message: 'Error fetching test', error: err.message });
     }
 };
