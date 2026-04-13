@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { CheckCircle2, XCircle, AlertCircle, TrendingUp, BarChart3, ArrowRight, ClipboardList, Share2, Twitter, Linkedin, Link2, Smartphone } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, TrendingUp, BarChart3, ArrowRight, ClipboardList, Share2, Twitter, Linkedin, Link2, Smartphone, ScanLine, X } from 'lucide-react'
+import OMRSheet from '../components/exam/OMRSheet'
 
 const StatItem = ({ label, value, icon: Icon, color }) => (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center gap-6 shadow-sm hover:translate-y-[-4px] transition-all">
@@ -21,6 +22,7 @@ export default function ResultPage() {
     const location = useLocation()
     const [result, setResult] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [showOMR, setShowOMR] = useState(false)
 
     useEffect(() => {
         const fetchResult = async () => {
@@ -95,17 +97,71 @@ export default function ResultPage() {
 
     if (loading) return <div className="h-screen flex items-center justify-center font-bold">Generating Report...</div>
 
+    // Build evaluations map for OMR sheet (all questions evaluated on static result page)
+    const questions = location.state?.questions || []
+    const answers = location.state?.answers || []
+    const evaluations = questions.reduce((acc, q, idx) => {
+        const selected = answers[idx]
+        const isCorrect = selected && selected === q.correct
+        const isWrong = selected && selected !== q.correct
+        acc[idx] = {
+            isCorrect,
+            isWrong,
+            isSkipped: !selected,
+            marks: q.marks || 1,
+            negMarks: q.negativeMarks || 0
+        }
+        return acc
+    }, {})
+
     return (
         <div className="min-h-screen bg-slate-50 p-6 md:p-12 overflow-y-auto font-sans">
+
+            {/* ── OMR Sheet Full-Screen Modal ── */}
+            {showOMR && (
+                <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm overflow-y-auto flex flex-col items-center py-6 px-4">
+                    <div className="w-full" style={{ maxWidth: '1100px' }}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-white text-2xl font-black">OMR Answer Sheet</h2>
+                                <p className="text-slate-400 text-sm">Your evaluated responses</p>
+                            </div>
+                            <button
+                                onClick={() => setShowOMR(false)}
+                                className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-sm font-black border border-white/20 transition-all"
+                            >
+                                <X size={18} /> Close
+                            </button>
+                        </div>
+                        <OMRSheet
+                            questions={questions}
+                            answers={answers}
+                            evaluations={questions.length > 0 ? evaluations : null}
+                            currentIndex={-1}
+                            session={{ _id: sessionId }}
+                            test={{ title: result?.testTitle || 'Assessment' }}
+                            userName={result?.candidateName || ''}
+                        />
+                    </div>
+                </div>
+            )}
             <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-12 md:mb-16 gap-8">
                 <div>
                     <h1 className="text-4xl md:text-5xl font-black font-outfit text-slate-900 tracking-tight leading-none mb-4 md:mb-2 italic">Exam Result</h1>
                     <p className="text-slate-500 font-medium text-base md:text-lg">Comprehensive score analysis and performance metrics.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    {questions.length > 0 && (
+                        <button
+                            onClick={() => setShowOMR(true)}
+                            className="flex items-center justify-center gap-2 bg-[#c2185b] text-white py-3 md:py-4 px-6 md:px-8 rounded-full text-base font-black shadow-xl shadow-pink-200 hover:bg-[#ad1457] transition-all"
+                        >
+                            <ScanLine size={20} /> View OMR Sheet
+                        </button>
+                    )}
                     {location.state?.uniqueLink && (
                         <button 
-                            onClick={() => navigate(`/exam/${location.state.uniqueLink}`)} 
+                            onClick={() => navigate(`/exam-ready/${location.state.uniqueLink}`)} 
                             className="bg-white text-slate-900 border-2 border-slate-200 py-3 md:py-4 px-6 md:px-10 rounded-full text-base md:text-lg font-black flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 transition-all"
                         >
                             Retake Exam

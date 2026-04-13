@@ -253,7 +253,7 @@ const Communities = () => {
                                 
                                 {isEnrolled ? (
                                      <div className="flex flex-col gap-3 mt-auto">
-                                         <Link to={`/exam/${exam.link}`} className="block w-full">
+                                         <Link to={`/exam-ready/${exam.link}`} className="block w-full">
                                              <button className="w-full py-4 bg-slate-900 text-white rounded-[1.25rem] text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-slate-200">
                                                  Join Exam
                                              </button>

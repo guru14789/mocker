@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { OMRSheet } from '../components/exam/OMRSheet'
+import OMRSheet from '../components/exam/OMRSheet'
 import { Timer } from '../components/exam/Timer'
 import { useProctor } from '../hooks/useProctor'
 import { useAuth } from '../context/AuthContext'
@@ -360,329 +360,90 @@ const GradingOverlay = ({ questions, answers, test, session, onComplete }) => {
     const { user } = useAuth()
     const [currentScore, setCurrentScore] = useState(0)
     const [currentIndex, setCurrentIndex] = useState(-1)
-    
+    const [evaluations, setEvaluations] = useState({})
+    const [allDone, setAllDone] = useState(false)
+
+    const safeQuestions = questions || []
+    const totalMarks = safeQuestions.reduce((s, q) => s + (q.marks || 1), 0)
+    const scorePercent = totalMarks > 0 ? Math.max(0, (currentScore / totalMarks) * 100) : 0
+
     useGSAP(() => {
         const tl = gsap.timeline({
             onComplete: () => {
-                gsap.to(container.current, {
-                    opacity: 0,
-                    delay: 2,
-                    duration: 0.5,
-                    onComplete
-                })
+                setAllDone(true)
+                gsap.to(container.current, { opacity: 0, delay: 2.5, duration: 0.7, onComplete })
             }
         })
 
-        // Initial entrance
-        tl.from('.grading-card', {
-            x: -100,
-            opacity: 0,
-            duration: 1,
-            ease: 'power4.out'
-        })
-        tl.from('.omr-preview', {
-            x: 100,
-            opacity: 0,
-            duration: 1,
-            ease: 'power4.out'
-        }, '<')
+        tl.from('.omr-sheet', { y: 50, opacity: 0, duration: 0.8, ease: 'power4.out' })
+        tl.from('.score-bar', { y: -40, opacity: 0, duration: 0.6, ease: 'power3.out' }, '<0.1')
 
-        // Staggered grading
-        questions.forEach((q, idx) => {
+        safeQuestions.forEach((q, idx) => {
             tl.to({}, {
-                duration: 0.25,
+                duration: 0.28,
                 onStart: () => {
                     setCurrentIndex(idx)
                     const selected = answers[idx]
-                    if (selected === q.correct) {
-                        setCurrentScore(prev => prev + (q.marks || 1))
-                    }
+                    const isCorrect = selected && selected === q.correct
+                    const isWrong = selected && selected !== q.correct
+                    const delta = isCorrect ? (q.marks || 1) : isWrong ? -(q.negativeMarks || 0) : 0
+                    if (delta !== 0) setCurrentScore(prev => prev + delta)
+                    setEvaluations(prev => ({ ...prev, [idx]: { isCorrect, isWrong, isSkipped: !selected, delta, marks: q.marks || 1, negMarks: q.negativeMarks || 0 } }))
                 }
             })
-            
-            tl.from(`.row-${idx}`, {
-                x: -20,
-                duration: 0.2,
-                ease: 'power2.out'
-            }, '<')
-
-            tl.to(`.status-${idx}`, {
-                scale: 1,
-                opacity: 1,
-                duration: 0.2,
-                ease: 'back.out(2)'
-            }, '>-0.05')
-
-            // Pulse the OMR bubble if it exists
+            // Pulse selected bubble
             if (answers && answers[idx]) {
-                tl.to(`.bubble-${idx}-${answers[idx]}`, {
-                    scale: 1.3,
-                    duration: 0.2,
-                    repeat: 1,
-                    yoyo: true
-                }, '<')
+                tl.to(`.qbub-${idx}-${answers[idx]}`, { scale: 1.3, duration: 0.12, repeat: 1, yoyo: true, ease: 'power2.inOut' }, '<')
             }
         })
-
     }, { scope: container })
 
     return (
-        <div ref={container} className="fixed inset-0 z-[100] bg-[#0F172A]/98 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden">
-            {/* Background Digital Rain / Grid */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#d81b60 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-            </div>
+        <div ref={container} className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-start overflow-y-auto">
 
-            <div className="flex flex-col lg:flex-row w-full max-w-7xl h-full max-h-[900px] gap-8 relative z-10">
-                {/* Left: Logic Audit */}
-                <div className="grading-card flex-1 bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-white/10">
-                    <div className="bg-[#0F172A] p-10 text-center relative overflow-hidden shrink-0">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-                        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em] mb-4">Grading Intelligence Engine</p>
-                        <div className="flex items-center justify-center gap-6">
-                            <div className="relative">
-                                <h2 className="text-7xl font-black font-outfit text-white tabular-nums drop-shadow-2xl">
-                                    {(currentScore || 0).toFixed(0)}
-                                </h2>
-                            </div>
-                            <div className="text-left border-l border-white/10 pl-6">
-                                <p className="text-indigo-400 text-[10px] font-black tracking-widest leading-tight">AUTHENTICATED</p>
-                                <p className="text-white text-lg font-black font-outfit leading-none mt-1">SCORE</p>
-                            </div>
+            {/* ── Score Bar (Floating) ── */}
+            <div className="score-bar sticky top-0 z-50 w-full bg-[#0F172A] px-6 py-3 flex items-center justify-between shadow-2xl border-b border-white/10">
+                <div>
+                    <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.35em]">Grading Engine · {test?.title || 'Assessment'}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                            Q {Math.max(0, currentIndex + 1)} / {safeQuestions.length}
+                        </span>
+                        <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                                style={{ width: `${safeQuestions.length > 0 ? ((currentIndex + 1) / safeQuestions.length) * 100 : 0}%` }} />
                         </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-10 space-y-4 custom-scrollbar bg-slate-50/50">
-                        {(questions || []).map((q, idx) => {
-                            const isCorrect = answers[idx] === q.correct;
-                            const isActive = idx === currentIndex;
-                            const isDone = idx <= currentIndex;
-                            
-                            return (
-                                <div 
-                                    key={idx} 
-                                    className={`row-${idx} flex items-center justify-between p-5 rounded-[1.5rem] transition-all duration-300 border
-                                        ${isActive ? 'bg-white border-indigo-200 scale-[1.03] shadow-lg ring-4 ring-indigo-50' : 'bg-white/50 border-slate-100'}
-                                        ${isDone ? 'opacity-100' : 'opacity-20'}`}
-                                >
-                                    <div className="flex items-center gap-8">
-                                        <span className="text-[10px] font-black text-slate-300 w-6 uppercase tracking-widest italic">{String(idx + 1).padStart(2, '0')}</span>
-                                        <div className="flex gap-2">
-                                            {['A', 'B', 'C', 'D'].map(label => (
-                                                <div 
-                                                    key={label}
-                                                    className={`w-9 h-9 rounded-xl border-2 flex items-center justify-center text-xs font-black transition-all
-                                                        ${answers[idx] === label 
-                                                            ? (isDone ? (isCorrect ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-100') : 'bg-slate-900 border-slate-900 text-white')
-                                                            : 'border-slate-100 text-slate-200'}`}
-                                                >
-                                                    {label}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className={`status-${idx} opacity-0 scale-50 shrink-0`}>
-                                        {isCorrect ? (
-                                            <div className="flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-[0.1em]">
-                                                <CheckCircle size={14} strokeWidth={3} /> PASSED +{q.marks}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-red-500 font-black text-[10px] uppercase tracking-[0.1em]">
-                                                <XCircle size={14} strokeWidth={3} /> FAIL
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        })}
                     </div>
                 </div>
-
-                {/* Right: Digital OMR Twin (Advanced Debug Template) */}
-                <div className="omr-preview flex-[1.4] bg-white rounded-[3rem] shadow-2xl p-10 border-[3px] border-[#d81b60] hidden lg:flex flex-col relative overflow-hidden text-[#d81b60]">
-                    {/* Corner Alignment Markers (Fiducials) */}
-                    <div className="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-slate-900"></div>
-                    <div className="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-slate-900"></div>
-                    <div className="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-slate-900"></div>
-                    <div className="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-slate-900"></div>
-
-                    {/* AI Vision HUD Elements */}
-                    <div className="absolute top-10 right-20 text-[8px] font-mono font-black opacity-40 text-right space-y-1">
-                        <p>VISION_ENGINE: V2.4.RC</p>
-                        <p>LATENCY: 12ms</p>
-                        <p>SYNC_LOCK: OK</p>
+                <div className="text-right">
+                    <p className="text-[8px] font-black tracking-[0.35em] uppercase mb-0.5" style={{ color: allDone ? '#34d399' : '#818cf8' }}>
+                        {allDone ? '✓ Final Score' : 'Running Score'}
+                    </p>
+                    <div className="flex items-baseline gap-1.5">
+                        <span className={`text-4xl font-black tabular-nums ${currentScore < 0 ? 'text-red-400' : 'text-white'}`} style={{ fontFamily: 'Arial Black, sans-serif' }}>
+                            {currentScore >= 0 ? `+${currentScore.toFixed(0)}` : currentScore.toFixed(0)}
+                        </span>
+                        <span className="text-slate-500 text-sm font-bold">/ {totalMarks}</span>
                     </div>
-
-                    {/* Security Micro-Text Watermark */}
-                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 -rotate-12 opacity-[0.04] pointer-events-none select-none">
-                        <div className="text-[120px] font-black whitespace-nowrap font-outfit uppercase">OFFICIAL OMR AUTHENTICATED</div>
-                        <div className="text-[120px] font-black whitespace-nowrap font-outfit uppercase">OFFICIAL OMR AUTHENTICATED</div>
+                    <div className="mt-1 h-1 bg-white/10 rounded-full w-36 overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-700 ${scorePercent >= 60 ? 'bg-emerald-400' : scorePercent >= 35 ? 'bg-amber-400' : 'bg-red-400'}`}
+                            style={{ width: `${Math.max(0, scorePercent)}%` }} />
                     </div>
-
-                    <div className="relative z-10 flex-1 flex flex-col">
-                        <div className="border-[1.5px] border-[#d81b60] mb-6 rounded-2xl overflow-hidden shrink-0">
-                            <div className="bg-[#fff0f3] border-b border-[#d81b60] py-4 text-center px-6">
-                                <h1 className="text-2xl font-black font-outfit uppercase tracking-[0.2em] leading-none mb-1">
-                                    {test?.organization || "OFFICIAL EXAMINATION BUREAU"}
-                                </h1>
-                                <p className="text-[9px] font-black tracking-widest opacity-70">SECURE OMR ANSWER SHEET • PART - 1</p>
-                            </div>
-                            <div className="flex bg-white text-[8px] font-black border-b border-[#d81b60]">
-                                <div className="flex-1 py-3 px-4 border-r border-[#d81b60]">EXAM TITLE: {test?.title || 'GENERAL ASSESSMENT'}</div>
-                                <div className="flex-1 py-3 px-4 bg-[#fff0f3]">CANDIDATE: {user?.name || 'GUEST CANDIDATE'}</div>
-                            </div>
-                        </div>
-
-                        {/* Metadata Mock (Roll Number & Codes) */}
-                        <div className="grid grid-cols-[180px_1fr_120px] gap-6 mb-8 h-[160px] shrink-0">
-                             {/* Roll Number Grid */}
-                             <div className="border-[1.5px] border-[#d81b60] rounded-xl flex flex-col bg-white overflow-hidden">
-                                <div className="bg-[#fff0f3] text-[8px] font-black py-1.5 text-center border-b border-[#d81b60] tracking-widest">ROLL NUMBER</div>
-                                <div className="flex-1 flex p-1.5 gap-[1px]">
-                                   {[...Array(6)].map((_, col) => (
-                                     <div key={col} className="flex-1 flex flex-col gap-[1px] opacity-40">
-                                        <div className="h-4 border-b border-[#ffd1dc] bg-slate-50 mb-1"></div>
-                                        {[...Array(10)].map((_, row) => (
-                                          <div key={row} className="flex-1 flex items-center justify-center">
-                                            <div className="w-[10px] h-[10px] rounded-full border border-[#d81b60] text-[5px] flex items-center justify-center font-black">
-                                               {row}
-                                            </div>
-                                          </div>
-                                        ))}
-                                     </div>
-                                   ))}
-                                </div>
-                             </div>
-
-                             {/* Booklet & Info */}
-                             <div className="flex flex-col gap-4">
-                                <div className="border-[1.5px] border-[#d81b60] rounded-xl h-[65px] flex flex-col bg-white overflow-hidden">
-                                   <div className="bg-[#fff0f3] text-[8px] font-black py-1.5 text-center border-b border-[#d81b60] uppercase tracking-widest">Booklet Number</div>
-                                   <div className="flex-1 flex p-3 items-center justify-center gap-1.5">
-                                      {[...Array(6)].map((_, i) => (
-                                        <div key={i} className="w-6 h-6 border-[1.5px] border-[#d81b60] bg-slate-50 rounded-sm"></div>
-                                      ))}
-                                   </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 flex-1">
-                                    <div className="border-[1.5px] border-[#d81b60] rounded-xl flex flex-col bg-white overflow-hidden">
-                                        <div className="bg-[#fff0f3] text-[7.5px] font-black py-1 px-1 text-center border-b border-[#d81b60] uppercase italic">Series</div>
-                                        <div className="flex-1 flex items-center justify-center gap-2">
-                                            {['A', 'B', 'C', 'D'].map(l => (
-                                                <div key={l} className="w-5 h-5 rounded-full border border-[#d81b60] text-[7px] font-black flex items-center justify-center opacity-40">{l}</div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="border-[1.5px] border-[#d81b60] rounded-xl flex flex-col bg-white overflow-hidden">
-                                        <div className="bg-[#fff0f3] text-[7.5px] font-black py-1 px-1 text-center border-b border-[#d81b60] uppercase italic">Code</div>
-                                        <div className="flex-1 flex items-center justify-center">
-                                            <div className="w-8 h-8 font-mono font-black text-xl flex items-center justify-center">#{session?._id?.slice(-2).toUpperCase() || 'X1'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                             </div>
-
-                             {/* Barcode Mock */}
-                             <div className="flex flex-col gap-4">
-                                <div className="flex-1 border-[1.5px] border-[#d81b60] rounded-xl bg-white p-3 flex flex-col justify-between">
-                                    <div className="space-y-[1px] opacity-80">
-                                        {[...Array(30)].map((_, i) => (
-                                            <div key={i} className="bg-[#d81b60]" style={{ height: `${[1,2,4,1,3][i%5]}px`, width: '100%' }}></div>
-                                        ))}
-                                    </div>
-                                    <div className="text-[7px] font-mono font-black text-center mt-2 tracking-tighter">SECURE-SESSION-{session?._id?.slice(-6).toUpperCase()}</div>
-                                </div>
-                             </div>
-                        </div>
-
-                        {/* OMR Question Body */}
-                        <div className="flex-1 bg-white p-10 rounded-[2.5rem] shadow-inner border-[2px] border-[#ffd1dc]">
-                             <div className="grid grid-cols-2 gap-12 h-full content-start">
-                                {Array.from({ length: 2 }).map((_, col) => {
-                                    const safeQuestions = questions || [];
-                                    const colSize = Math.ceil(safeQuestions.length / 2) || 1;
-                                    return (
-                                        <div key={col} className="space-y-3">
-                                            <div className="flex justify-between items-center px-4 mb-2">
-                                                <span className="text-[7px] font-black opacity-30 uppercase tracking-[0.2em]">Q. No</span>
-                                                <span className="text-[7px] font-black opacity-30 uppercase tracking-[0.2em]">Response</span>
-                                            </div>
-                                            {safeQuestions.slice(col * colSize, (col + 1) * colSize).map((q, qidx) => {
-                                                const actualIdx = col * colSize + qidx;
-                                                const isAnalyzed = actualIdx <= currentIndex;
-                                                const isActive = actualIdx === currentIndex;
-                                                return (
-                                                        <div className="flex items-center gap-8 px-6 py-2 rounded-xl transition-all duration-300 relative group overflow-visible">
-                                                            {/* AI Bounding Box (Only on active/analyzed rows) */}
-                                                            {isAnalyzed && (
-                                                                <div className={`absolute inset-0 border-2 rounded-xl pointer-events-none transition-all duration-300 
-                                                                    ${isActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-emerald-500/20'}`}>
-                                                                    <div className={`absolute -top-3 left-2 px-1 text-[6px] font-black uppercase tracking-tighter
-                                                                        ${isActive ? 'text-indigo-600' : 'text-emerald-600/40'}`}>
-                                                                        {isActive ? '[REALTIME_AUDIT]' : '[OBJECT_IDENTIFIED]'}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
-                                                            <span className="text-[11px] font-black text-[#d81b60] w-5 italic relative z-10">{String(actualIdx + 1).padStart(2, '0')}.</span>
-                                                            <div className="flex gap-5 relative z-10">
-                                                                {['A', 'B', 'C', 'D'].map(label => {
-                                                                    const isUserSelect = answers && answers[actualIdx] === label;
-                                                                    return (
-                                                                        <div key={label} className="relative">
-                                                                             <div className={`w-7 h-7 rounded-full border-[1.5px] border-[#d81b60] flex items-center justify-center text-[9px] font-black transition-all duration-300
-                                                                                ${isAnalyzed && isUserSelect ? 'bg-[#d81b60] border-[#d81b60] text-white scale-110 shadow-lg' : 'text-[#d81b60]'}`}>
-                                                                                {label}
-                                                                            </div>
-                                                                            {/* Confidence Readout on active bubble */}
-                                                                            {isActive && isUserSelect && (
-                                                                                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[6px] font-black text-indigo-600 animate-pulse">
-                                                                                    CONF: 0.9984
-                                                                                </div>
-                                                                            )}
-                                                                            {isAnalyzed && isUserSelect && (
-                                                                                <div className={`bubble-${actualIdx}-${label} absolute inset-0 rounded-full bg-[#d81b60] pointer-events-none opacity-20 -z-10`} />
-                                                                        )}
-                                                                    </div>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )
-                                })}
-                             </div>
-                        </div>
-
-                        {/* Footer Markers */}
-                        <div className="mt-8 flex justify-between items-center px-2">
-                             <div className="flex gap-2">
-                                {[...Array(6)].map((_, i) => <div key={i} className="w-4 h-4 bg-[#d81b60]"></div>)}
-                             </div>
-                             <div className="text-[9px] font-black italic tracking-widest opacity-40">MOCKER OMR INTERFACE • {test?.organizationCode || 'OFFICIAL'}</div>
-                             <div className="flex gap-2">
-                                {[...Array(6)].map((_, i) => <div key={i} className="w-4 h-4 bg-[#d81b60]"></div>)}
-                             </div>
-                        </div>
-                    </div>
-
-                    {/* Scanner line animation (Red Laser) */}
-                    <div className="absolute inset-x-0 h-1.5 bg-[#d81b60] shadow-[0_0_20px_#d81b60] top-0 animate-scanning-line opacity-40 z-20"></div>
                 </div>
             </div>
 
-            <style dangerouslySetInnerHTML={{ __html: `
-                @keyframes scanning-line {
-                    0% { top: 0% }
-                    100% { top: 100% }
-                }
-                .animate-scanning-line {
-                    animation: scanning-line 3s linear infinite;
-                }
-            `}} />
+            {/* ── OMR Sheet ── */}
+            <div className="omr-sheet my-4 mx-2 w-full" style={{ maxWidth: '1100px' }}>
+                <OMRSheet
+                    questions={safeQuestions}
+                    answers={answers}
+                    evaluations={evaluations}
+                    currentIndex={currentIndex}
+                    session={session}
+                    test={test}
+                    userName={user?.name || ''}
+                />
+            </div>
         </div>
     )
 }
@@ -708,13 +469,22 @@ const ProctorWebcam = ({ onHeadTurn }) => {
         // Ultra-High Sensitivity movement + presence monitor
         let calibration = null
         let absenceCounter = 0
+        let frameCount = 0
 
         const interval = setInterval(() => {
-            if (!videoRef.current || !canvasRef.current) return
+            if (!videoRef.current || !canvasRef.current || videoRef.current.readyState !== 4) return
             const ctx = canvasRef.current.getContext('2d')
             ctx.drawImage(videoRef.current, 0, 0, 100, 75)
             const frame = ctx.getImageData(0, 0, 100, 75).data
             
+            frameCount++
+            
+            // Allow 12 frames (~3 seconds) for the webcam to adjust focus and auto-exposure
+            if (frameCount <= 12) {
+                lastFrame.current = frame
+                return
+            }
+
             // Calculate average luminosity for presence detection
             let avgLumi = 0
             for (let i = 0; i < frame.length; i += 4) {
@@ -725,17 +495,20 @@ const ProctorWebcam = ({ onHeadTurn }) => {
             if (!calibration) {
                 calibration = avgLumi
                 console.log("Proctoring Calibrated Base Presence:", calibration)
+            } else {
+                // Adapt calibration slowly to accommodate webcam auto-exposure and screen brightness changes
+                calibration = calibration * 0.98 + avgLumi * 0.02
             }
 
             if (lastFrame.current) {
                 let totalDiff = 0
                 for (let i = 0; i < frame.length; i += 4) {
                     const pixelDiff = Math.abs(frame[i] - lastFrame.current[i])
-                    if (pixelDiff > 25) totalDiff += pixelDiff
+                    if (pixelDiff > 40) totalDiff += pixelDiff
                 }
                 
-                // 1. Movement Detection (Lowered to 150k for ultra sensitivity)
-                if (totalDiff > 150000 && !violationCooldown.current) {
+                // 1. Movement Detection (Adjusted for less false positives)
+                if (totalDiff > 300000 && !violationCooldown.current) {
                     console.log("High Movement Detected:", totalDiff)
                     violationCooldown.current = true
                     onHeadTurn("Significant movement detected")
@@ -744,7 +517,7 @@ const ProctorWebcam = ({ onHeadTurn }) => {
 
                 // 2. Presence Check (If luminosity shifts drastically, person probably left)
                 const lumiShift = Math.abs(avgLumi - calibration)
-                if (lumiShift > 25) { // Significant change in frame composition
+                if (lumiShift > 50) { // Significant change in frame composition
                     absenceCounter++
                     if (absenceCounter > 8 && !violationCooldown.current) { // Lasting over 2 seconds
                         console.log("Presence Lost/Drastic Change Detected:", lumiShift)

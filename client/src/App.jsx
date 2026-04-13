@@ -6,6 +6,7 @@ import Communities from './pages/Communities'
 import CreatorDashboard from './pages/CreatorDashboard'
 import TestBuilder from './pages/TestBuilder'
 import ExamPage from './pages/ExamPage'
+import ExamReadyCheck from './pages/ExamReadyCheck'
 import ResultPage from './pages/ResultPage'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import CandidateDashboard from './pages/CandidateDashboard'
@@ -41,6 +42,10 @@ function App() {
             <ProtectedRoute><OMRScannerPage /></ProtectedRoute>
           } />
 
+          {/* System check gateway — must pass before entering the exam */}
+          <Route path="/exam-ready/:uniqueLink" element={
+            <ProtectedRoute><ExamReadyCheck /></ProtectedRoute>
+          } />
           <Route path="/exam/:uniqueLink" element={
             <ProtectedRoute><ExamPage /></ProtectedRoute>
           } />
