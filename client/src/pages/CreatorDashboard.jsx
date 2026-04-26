@@ -43,22 +43,22 @@ const CreatorDashboard = () => {
     if (loading) return <div className="h-screen flex items-center justify-center font-bold">Synchronizing Dashboard...</div>
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-sans selection:bg-slate-900 selection:text-white">
+        <div className="flex bg-[#F8FAFC] min-h-screen font-sans selection:bg-slate-900 selection:text-white flex-col lg:flex-row">
             <Sidebar />
-            <main className="flex-1 p-12 overflow-y-auto max-w-7xl mx-auto w-full">
-                <header className="flex justify-between items-center mb-16 px-4">
-                    <div className="space-y-2">
-                        <h2 className="text-5xl font-black font-outfit text-slate-950 tracking-tight capitalize leading-none">{activeTab} Dashboard</h2>
-                        <p className="text-slate-500 font-medium text-sm border-l-2 border-slate-200 pl-4">Premium real-time command center for exam creators.</p>
+            <main className="flex-1 p-4 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+                <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-12 px-2 gap-4">
+                    <div className="space-y-1">
+                        <h2 className="text-3xl lg:text-4xl font-black font-outfit text-slate-950 tracking-tight capitalize leading-tight">{activeTab} Dashboard</h2>
+                        <p className="text-slate-500 font-medium text-xs lg:text-sm border-l-2 border-slate-200 pl-3">Premium real-time command center for exam creators.</p>
                     </div>
                     {activeTab === 'overview' || activeTab === 'tests' ? (
-                        <Link to="/builder" className="btn-primary py-5 px-10 flex items-center gap-3 text-lg shadow-2xl shadow-slate-200 active:scale-95 transition-all">
-                            <Plus size={24} /> New Assessment
+                        <Link to="/builder" className="w-full sm:w-auto bg-slate-950 text-white py-3 px-6 rounded-2xl flex items-center justify-center gap-2 text-sm font-black shadow-xl shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all">
+                            <Plus size={20} /> New Assessment
                         </Link>
                     ) : null}
                 </header>
 
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
                     {renderContent()}
                 </div>
             </main>

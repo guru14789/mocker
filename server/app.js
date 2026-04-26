@@ -33,6 +33,7 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/tests', require('./routes/test.routes'));
 app.use('/api/sessions', require('./routes/session.routes'));
 app.use('/api/results', require('./routes/result.routes'));
+app.use('/api/ai', require('./routes/ai.routes'));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

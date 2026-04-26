@@ -6,7 +6,7 @@ import { Timer } from '../components/exam/Timer'
 import { useProctor } from '../hooks/useProctor'
 import { useAuth } from '../context/AuthContext'
 import { SecureQuestionRenderer } from '../components/exam/SecureQuestionRenderer'
-import { ChevronLeft, ChevronRight, Send, AlertCircle, TrendingUp, CheckCircle, XCircle, Shield, Camera } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Send, AlertCircle, TrendingUp, CheckCircle, XCircle, Shield, Camera, WifiOff, RefreshCw } from 'lucide-react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 
@@ -17,6 +17,7 @@ const SAMPLE_QUESTIONS = [
         marks: 2,
         correct: 'B',
         topic: 'React Core',
+        explanation: 'React Fragments allow you to group a list of children without adding extra nodes to the DOM, which keeps the HTML structure clean and prevents CSS layout issues related to unexpected div elements.',
         options: [
             { label: 'A', text: 'They improve application security' },
             { label: 'B', text: 'They allow grouping elements without adding extra nodes to the DOM' },
@@ -30,6 +31,7 @@ const SAMPLE_QUESTIONS = [
         marks: 2,
         correct: 'C',
         topic: 'React Hooks',
+        explanation: 'The useEffect hook is designed to handle side effects such as data fetching, subscriptions, or manually changing the DOM. it runs after every render by default, but can be optimized with a dependency array.',
         options: [
             { label: 'A', text: 'useMemo' },
             { label: 'B', text: 'useCallback' },
@@ -43,6 +45,7 @@ const SAMPLE_QUESTIONS = [
         marks: 3,
         correct: 'B',
         topic: 'Optimization',
+        explanation: 'useMemo returns a memoized value. It only recomputes the memoized value when one of the dependencies has changed, preventing expensive calculations on every render.',
         options: [
             { label: 'A', text: 'Memoizes a function to prevent re-creation' },
             { label: 'B', text: 'Memoizes the result of a calculation until dependencies change' },
@@ -56,6 +59,7 @@ const SAMPLE_QUESTIONS = [
         marks: 2,
         correct: 'C',
         topic: 'React Core',
+        explanation: 'Keys help React identify which items have changed, are added, or are removed. They should be given to the elements inside the array to give the elements a stable identity across renders.',
         options: [
             { label: 'A', text: 'It style the individual list items' },
             { label: 'B', text: 'It provides a unique ID for CSS selectors' },
@@ -69,6 +73,7 @@ const SAMPLE_QUESTIONS = [
         marks: 3,
         correct: 'B',
         topic: 'State Management',
+        explanation: 'Using a functional update ensures that you are working with the most recent state value, avoiding race conditions that can occur when updates are batched.',
         options: [
             { label: 'A', text: 'setState(state + 1)' },
             { label: 'B', text: 'setState(prev => prev + 1)' },
@@ -91,28 +96,73 @@ export default function ExamPage() {
     const [violation, setViolation] = useState(null)
     const [isTerminated, setIsTerminated] = useState(false)
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
+    const [isOnline, setIsOnline] = useState(navigator.onLine)
+    const [syncQueue, setSyncQueue] = useState(() => {
+        const saved = localStorage.getItem(`sync_queue_${uniqueLink}`)
+        return saved ? JSON.parse(saved) : []
+    })
+    const [isSyncing, setIsSyncing] = useState(false)
 
     useEffect(() => {
-        const startSession = async () => {
+        const handleOnline = () => setIsOnline(true)
+        const handleOffline = () => setIsOnline(false)
+        window.addEventListener('online', handleOnline)
+        window.addEventListener('offline', handleOffline)
+        return () => {
+            window.removeEventListener('online', handleOnline)
+            window.removeEventListener('offline', handleOffline)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (isOnline && syncQueue.length > 0) {
+            syncOfflineData()
+        }
+    }, [isOnline])
+
+    const syncOfflineData = async () => {
+        if (isSyncing || !session?._id) return
+        setIsSyncing(true)
+        const queue = [...syncQueue]
+        const remaining = []
+
+        for (const item of queue) {
             try {
-                // In a real app, we'd find the test by uniqueLink first
-                // For this demo, we'll assume the link directly maps to a test ID or slug
-                const res = await axios.get(`http://localhost:5000/api/tests/link/${uniqueLink}`)
-                setTest(res.data.test)
-                if (res.data.questions?.length > 0) {
-                    setQuestions(res.data.questions)
+                if (item.type === 'answer') {
+                    await axios.post(`http://localhost:5000/api/sessions/${session._id}/answer`, { idx: item.idx, opt: item.opt })
+                } else if (item.type === 'violation') {
+                    await axios.post(`http://localhost:5000/api/sessions/${session._id}/violation`, item.data)
                 }
-                
-                const sessionRes = await axios.post('http://localhost:5000/api/sessions/start', { testId: res.data.test._id })
-                setSession(sessionRes.data.session)
             } catch (err) {
-                console.error('Failed to start exam', err)
-                // Fallback for demo: create a mock session
-                setSession({ _id: 'mock-session-' + Math.random().toString(36).substr(2, 9) })
-            } finally {
-                setLoading(false)
+                console.error('Sync failed for item', item, err)
+                remaining.push(item)
             }
         }
+
+        setSyncQueue(remaining)
+        localStorage.setItem(`sync_queue_${uniqueLink}`, JSON.stringify(remaining))
+        setIsSyncing(false)
+    }
+
+    const startSession = async () => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/tests/link/${uniqueLink}`)
+            setTest(res.data.test)
+            if (res.data.questions?.length > 0) {
+                setQuestions(res.data.questions)
+            }
+            
+            const sessionRes = await axios.post('http://localhost:5000/api/sessions/start', { testId: res.data.test._id })
+            setSession(sessionRes.data.session)
+        } catch (err) {
+            console.error('Failed to start exam', err)
+            setSession({ _id: 'mock-session-' + Math.random().toString(36).substr(2, 9) })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
         startSession()
     }, [uniqueLink])
 
@@ -134,13 +184,28 @@ export default function ExamPage() {
                 }
             }
             if (session) {
-                axios.post(`http://localhost:5000/api/sessions/${session._id}/violation`, v)
+                if (isOnline) {
+                    axios.post(`http://localhost:5000/api/sessions/${session._id}/violation`, v)
+                } else {
+                    const newQueue = [...syncQueue, { type: 'violation', data: v, timestamp: Date.now() }]
+                    setSyncQueue(newQueue)
+                    localStorage.setItem(`sync_queue_${uniqueLink}`, JSON.stringify(newQueue))
+                }
             }
         }
     })
 
     const handleSelect = (idx, opt) => {
         setAnswers({ ...answers, [idx]: opt })
+        if (session?._id) {
+            if (isOnline) {
+                axios.post(`http://localhost:5000/api/sessions/${session._id}/answer`, { idx, opt })
+            } else {
+                const newQueue = [...syncQueue, { type: 'answer', idx, opt, timestamp: Date.now() }]
+                setSyncQueue(newQueue)
+                localStorage.setItem(`sync_queue_${uniqueLink}`, JSON.stringify(newQueue))
+            }
+        }
     }
 
     const handleSubmit = async () => {
@@ -180,58 +245,70 @@ export default function ExamPage() {
     const currentQuestion = questions[currentQ]
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 md:overflow-hidden font-sans">
-            <header className="h-auto py-2 md:py-0 md:h-20 bg-white border-b border-slate-200 px-4 md:px-10 flex flex-col md:flex-row items-center justify-between shrink-0 gap-3">
+        <div className="min-h-screen flex flex-col bg-[#F8FAFC] lg:overflow-hidden font-sans">
+            <header className="h-auto py-3 lg:h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-4 lg:px-10 flex flex-col lg:flex-row items-center justify-between shrink-0 gap-3 sticky top-0 z-40">
                 <div className="flex flex-col">
-                    <h1 className="text-base md:text-xl font-black font-outfit uppercase tracking-wider text-slate-900 leading-tight truncate max-w-[200px] md:max-w-md">
-                        {test?.id?.includes('mock') ? test.title : (test?.title || 'Assessment Environment')}
+                    <h1 className="text-sm lg:text-lg font-black font-outfit uppercase tracking-tight text-slate-950 leading-tight truncate max-w-[250px] lg:max-w-md italic">
+                        {test?.id?.includes('mock') ? test.title : (test?.title || 'Assessment Sync')}
                     </h1>
-                    <span className="text-[9px] font-bold text-slate-400">SESSION ID: {session?._id.slice(-8)}</span>
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">SID: {session?._id.slice(-8)}</span>
                 </div>
-                <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto justify-between md:justify-end">
-                    <div className="hidden lg:flex items-center gap-3 pr-6 border-r border-slate-100">
-                        <Camera size={20} className="text-indigo-500 animate-pulse" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Proctoring Active</span>
+                <div className="flex items-center gap-2 lg:gap-6 w-full lg:w-auto justify-between lg:justify-end">
+                    {!isOnline && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 animate-pulse">
+                            <WifiOff size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-tight">Offline Mode Active</span>
+                        </div>
+                    )}
+                    {isSyncing && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100">
+                            <RefreshCw size={14} className="animate-spin" />
+                            <span className="text-[10px] font-black uppercase tracking-tight">Syncing Data...</span>
+                        </div>
+                    )}
+                    <div className="hidden xl:flex items-center gap-3 pr-6 border-r border-slate-100">
+                        <Camera size={18} className="text-indigo-500 animate-pulse" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Shield Enabled</span>
                     </div>
-                    <div className="flex items-center gap-2 md:gap-4 flex-1 md:flex-initial justify-end">
+                    <div className="flex items-center gap-2 lg:gap-4 flex-1 lg:flex-initial justify-end">
                         <Timer durationMinutes={test?.duration || 30} onTimeUp={confirmSubmit} onWarning={(msg) => console.log('Timer Warning:', msg)} />
-                        <button onClick={handleSubmit} className="btn-primary py-2.5 md:py-3 px-5 md:px-8 flex items-center gap-2 font-bold shadow-lg shadow-slate-200 text-xs md:text-sm">
-                            Submit <span className="hidden md:inline">Exam</span> <Send size={16} />
+                        <button onClick={handleSubmit} className="bg-slate-950 text-white py-2 lg:py-2.5 px-4 lg:px-6 rounded-xl flex items-center gap-2 text-[10px] lg:text-sm font-black shadow-lg shadow-slate-200 transition-all hover:scale-[1.02] active:scale-95">
+                            Submit <span className="hidden sm:inline">Exam</span> <Send size={14} />
                         </button>
                     </div>
                 </div>
             </header>
 
-            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden p-4 md:p-6 gap-6">
+            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden p-3 lg:p-6 gap-4 lg:gap-6">
                 {/* LEFT: Question Section */}
-                <div className="flex-1 lg:flex-[3] flex flex-col bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 overflow-hidden min-h-[500px]">
-                    <div className="flex-1 p-10 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 lg:flex-[3] flex flex-col bg-white rounded-2xl lg:rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden min-h-[400px]">
+                    <div className="flex-1 p-6 lg:p-10 overflow-y-auto custom-scrollbar">
                         {questions.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 animate-pulse">
-                                    <AlertCircle size={48} />
+                            <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 animate-pulse">
+                                    <AlertCircle size={32} />
                                 </div>
-                                <h2 className="text-3xl font-black text-slate-900 font-outfit">Preparing Assessment...</h2>
-                                <p className="text-slate-500 max-w-sm font-medium leading-relaxed italic">The secure environment is being initialized. If this persists, please refresh your browser.</p>
+                                <h2 className="text-xl lg:text-2xl font-black text-slate-950 font-outfit uppercase">Initializing Portal...</h2>
+                                <p className="text-slate-500 max-w-sm text-[10px] lg:text-xs font-bold leading-relaxed italic">The secure environment is being synchronized. Please wait.</p>
                             </div>
                         ) : test.examType === 'omr-scanning' ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center space-y-12 p-10">
-                                <div className="w-32 h-32 bg-indigo-50 text-indigo-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-100 rotate-3 animate-bounce">
-                                    <Printer size={64} />
+                            <div className="h-full flex flex-col items-center justify-center text-center space-y-8 p-6 lg:p-10">
+                                <div className="w-24 h-24 lg:w-32 lg:h-32 bg-slate-50 text-slate-950 rounded-[1.5rem] lg:rounded-[2.5rem] flex items-center justify-center shadow-xl rotate-3">
+                                    <Shield size={48} lg:size={64} />
                                 </div>
-                                <div className="space-y-4">
-                                    <h2 className="text-5xl font-black text-slate-900 font-outfit tracking-tight">Offline Question Paper</h2>
-                                    <p className="text-slate-500 max-w-md mx-auto font-medium leading-relaxed">
-                                        This is an OMR-based examination. Your question paper has been provided physically.
+                                <div className="space-y-2">
+                                    <h2 className="text-3xl lg:text-5xl font-black text-slate-950 font-outfit tracking-tight italic uppercase">Physical Media</h2>
+                                    <p className="text-slate-500 max-w-md mx-auto text-xs lg:text-base font-bold italic">
+                                        Assessment details are provided on paper.
                                     </p>
                                 </div>
-                                <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 max-w-sm w-full">
-                                    <p className="text-xs font-black uppercase tracking-widest text-[#0F172A] mb-2 text-left">How to submit:</p>
-                                    <p className="text-[10px] text-slate-400 font-bold leading-relaxed text-left">
-                                        1. Read the physical question paper.<br/>
-                                        2. Fill the bubbles on the right-hand digital OMR sheet.<br/>
-                                        3. Click "Submit Exam" once you have finished all answers.
-                                    </p>
+                                <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 max-w-sm w-full text-white">
+                                    <p className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-left">Sync Protocol:</p>
+                                    <div className="space-y-2 text-[10px] lg:text-xs text-left font-bold italic">
+                                        <div className="flex gap-2"><span>1.</span><span>Process offline question paper.</span></div>
+                                        <div className="flex gap-2"><span>2.</span><span>Sync responses to Digital OMR.</span></div>
+                                        <div className="flex gap-2"><span>3.</span><span>Execute Final Submission.</span></div>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -244,39 +321,39 @@ export default function ExamPage() {
                         )}
                     </div>
                     
-                    <div className="h-24 md:h-32 bg-white border-t border-slate-100 px-6 md:px-16 flex items-center justify-between shrink-0">
+                    <div className="h-20 lg:h-24 bg-slate-50/50 border-t border-slate-100 px-6 lg:px-12 flex items-center justify-between shrink-0">
                         <button 
                             disabled={currentQ === 0}
                             onClick={() => setCurrentQ(prev => prev - 1)}
-                            className="flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 disabled:opacity-20 hover:text-slate-900 transition-all group"
+                            className="flex items-center gap-2 font-black text-[9px] lg:text-[10px] uppercase tracking-widest text-slate-400 disabled:opacity-20 hover:text-slate-950 transition-all group"
                         >
-                            <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Previous
+                            <ChevronLeft size={16} lg:size={20} /> <span className="hidden sm:inline">Prev</span>
                         </button>
                         
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{currentQ + 1} / {questions.length}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] lg:text-xs font-black text-slate-950 uppercase tracking-widest italic">{currentQ + 1} <span className="text-slate-400">/ {questions.length}</span></span>
                         </div>
 
                         <button 
                             disabled={currentQ === questions.length - 1}
                             onClick={() => setCurrentQ(prev => prev + 1)}
-                            className="flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 disabled:opacity-20 hover:text-slate-900 transition-all group"
+                            className="flex items-center gap-2 font-black text-[9px] lg:text-[10px] uppercase tracking-widest text-slate-400 disabled:opacity-20 hover:text-slate-950 transition-all group"
                         >
-                            Next <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            <span className="hidden sm:inline">Next</span> <ChevronRight size={16} lg:size={20} />
                         </button>
                     </div>
                     </div>
 
                 {/* RIGHT: OMR Sheet Section */}
-                <div className="flex-1 flex flex-col gap-6 shrink-0 min-w-full lg:min-w-[380px]">
-                    <div className="flex-1 bg-white rounded-[3rem] border border-slate-200/60 shadow-xl shadow-slate-200/10 flex flex-col overflow-hidden">
-                        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                <div className="flex-1 flex flex-col gap-4 lg:gap-6 shrink-0 min-w-full lg:min-w-[340px] xl:min-w-[380px]">
+                    <div className="flex-1 bg-white rounded-2xl lg:rounded-[2.5rem] border border-slate-200/60 shadow-sm flex flex-col overflow-hidden">
+                        <div className="p-5 lg:p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
                             <div>
-                                <h3 className="text-lg font-black font-outfit text-[#0F172A] uppercase tracking-wider">Answer Sheet</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">OMR Digital Bubble</p>
+                                <h3 className="text-sm lg:text-lg font-black font-outfit text-slate-950 uppercase tracking-tight italic">Response Matrix</h3>
+                                <p className="text-[8px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Digital Bubble Analysis</p>
                             </div>
-                            <div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                                {Object.keys(answers).length} / {questions.length} DONE
+                            <div className="bg-slate-950 text-white px-3 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black uppercase tracking-widest border border-white/10">
+                                {Object.keys(answers).length} <span className="text-slate-500">/ {questions.length}</span>
                             </div>
                         </div>
                         
@@ -293,14 +370,14 @@ export default function ExamPage() {
                         </div>
                     </div>
                     {/* Live Camera Feed */}
-                    <div className="bg-[#0F172A] rounded-[3rem] h-[260px] relative overflow-hidden shadow-2xl border-4 border-white">
+                    <div className="bg-slate-950 rounded-2xl lg:rounded-[2.5rem] h-[200px] lg:h-[240px] relative overflow-hidden shadow-xl border border-white/5">
                         <ProctorWebcam onHeadTurn={triggerHeadTurn} />
-                        <div className="absolute top-4 left-4 px-3 py-1 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center gap-2 animate-pulse">
-                            <div className="w-1 h-1 bg-white rounded-full"></div> REC
+                        <div className="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-[8px] font-black rounded flex items-center gap-1.5 animate-pulse uppercase tracking-widest">
+                            <div className="w-1 h-1 bg-white rounded-full"></div> LIVE SYNC
                         </div>
-                        <div className="absolute bottom-4 left-4 right-4 bg-black/40 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-                            <p className="text-[9px] font-black text-white/80 uppercase tracking-widest flex items-center gap-2">
-                                <Shield size={12} className="text-emerald-400" /> AI Identity Verified
+                        <div className="absolute bottom-3 left-3 right-3 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                            <p className="text-[9px] font-black text-white/80 uppercase tracking-widest flex items-center gap-2 italic">
+                                <Shield size={12} className="text-emerald-400" /> Identity Secure
                             </p>
                         </div>
                     </div>
@@ -453,87 +530,96 @@ const ProctorWebcam = ({ onHeadTurn }) => {
     const canvasRef = React.useRef(null)
     const lastFrame = React.useRef(null)
     const violationCooldown = React.useRef(false)
+    const [status, setStatus] = useState('Initializing...')
 
     useEffect(() => {
         let stream = null
         const setupCamera = async () => {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 300 } })
+                stream = await navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360, frameRate: 15 } })
                 if (videoRef.current) videoRef.current.srcObject = stream
+                setStatus('Active')
             } catch (err) {
                 console.error("Camera access failed:", err)
+                setStatus('Camera Error')
             }
         }
         setupCamera()
 
-        // Ultra-High Sensitivity movement + presence monitor
         let calibration = null
         let absenceCounter = 0
         let frameCount = 0
+        let sensitivity = 0.05 // Base sensitivity for presence
 
         const interval = setInterval(() => {
             if (!videoRef.current || !canvasRef.current || videoRef.current.readyState !== 4) return
-            const ctx = canvasRef.current.getContext('2d')
-            ctx.drawImage(videoRef.current, 0, 0, 100, 75)
-            const frame = ctx.getImageData(0, 0, 100, 75).data
+            
+            const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true })
+            ctx.drawImage(videoRef.current, 0, 0, 80, 60)
+            const imageData = ctx.getImageData(0, 0, 80, 60)
+            const frame = imageData.data
             
             frameCount++
             
-            // Allow 12 frames (~3 seconds) for the webcam to adjust focus and auto-exposure
-            if (frameCount <= 12) {
-                lastFrame.current = frame
+            // Wait for webcam to auto-adjust
+            if (frameCount <= 15) {
+                lastFrame.current = new Uint8ClampedArray(frame)
                 return
             }
 
-            // Calculate average luminosity for presence detection
-            let avgLumi = 0
+            // 1. LUMINOSITY & PRESENCE DETECTION
+            let totalLumi = 0
             for (let i = 0; i < frame.length; i += 4) {
-                avgLumi += (frame[i] + frame[i+1] + frame[i+2]) / 3
+                totalLumi += (frame[i] + frame[i+1] + frame[i+2]) / 3
             }
-            avgLumi = avgLumi / (frame.length / 4)
+            const avgLumi = totalLumi / (frame.length / 4)
 
-            if (!calibration) {
+            if (calibration === null) {
                 calibration = avgLumi
-                console.log("Proctoring Calibrated Base Presence:", calibration)
             } else {
-                // Adapt calibration slowly to accommodate webcam auto-exposure and screen brightness changes
-                calibration = calibration * 0.98 + avgLumi * 0.02
+                // Adaptive calibration
+                calibration = calibration * 0.99 + avgLumi * 0.01
             }
 
+            // 2. MOTION DETECTION (Temporal Difference)
             if (lastFrame.current) {
-                let totalDiff = 0
+                let diffCount = 0
                 for (let i = 0; i < frame.length; i += 4) {
-                    const pixelDiff = Math.abs(frame[i] - lastFrame.current[i])
-                    if (pixelDiff > 40) totalDiff += pixelDiff
+                    const diff = Math.abs(frame[i] - lastFrame.current[i]) + 
+                                 Math.abs(frame[i+1] - lastFrame.current[i+1]) + 
+                                 Math.abs(frame[i+2] - lastFrame.current[i+2])
+                    if (diff > 90) diffCount++
                 }
                 
-                // 1. Movement Detection (Adjusted for less false positives)
-                if (totalDiff > 300000 && !violationCooldown.current) {
-                    console.log("High Movement Detected:", totalDiff)
+                const motionFactor = diffCount / (frame.length / 4)
+                
+                // High motion threshold
+                if (motionFactor > 0.45 && !violationCooldown.current) {
+                    console.warn("High Sensitivity Motion Triggered:", motionFactor)
                     violationCooldown.current = true
-                    onHeadTurn("Significant movement detected")
-                    setTimeout(() => violationCooldown.current = false, 5000)
+                    onHeadTurn("Excessive motion or potential head turn detected")
+                    setTimeout(() => violationCooldown.current = false, 6000)
                 }
 
-                // 2. Presence Check (If luminosity shifts drastically, person probably left)
+                // 3. PRESENCE DETECTION (Luminosity Shift)
                 const lumiShift = Math.abs(avgLumi - calibration)
-                if (lumiShift > 50) { // Significant change in frame composition
+                if (lumiShift > 40 || avgLumi < 5) { // Drastic change or darkness
                     absenceCounter++
-                    if (absenceCounter > 8 && !violationCooldown.current) { // Lasting over 2 seconds
-                        console.log("Presence Lost/Drastic Change Detected:", lumiShift)
+                    if (absenceCounter > 10 && !violationCooldown.current) {
                         violationCooldown.current = true
-                        onHeadTurn("User presence or focus lost")
+                        onHeadTurn("Candidate presence or focus not detected")
                         setTimeout(() => {
                             violationCooldown.current = false
                             absenceCounter = 0
-                        }, 5000)
+                        }, 8000)
                     }
                 } else {
                     absenceCounter = Math.max(0, absenceCounter - 1)
                 }
             }
-            lastFrame.current = frame
-        }, 250)
+            
+            lastFrame.current = new Uint8ClampedArray(frame)
+        }, 200)
 
         return () => {
             if (stream) stream.getTracks().forEach(t => t.stop())
@@ -542,9 +628,24 @@ const ProctorWebcam = ({ onHeadTurn }) => {
     }, [onHeadTurn])
 
     return (
-        <div className="w-full h-full bg-slate-800">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-            <canvas ref={canvasRef} width="100" height="75" className="hidden" />
+        <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center relative">
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1] opacity-90" />
+            <canvas ref={canvasRef} width="80" height="60" className="hidden" />
+            <div className="absolute inset-0 pointer-events-none border-[1px] border-white/5">
+                {/* Visual scanline effect */}
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-indigo-500/30 animate-[scan_3s_linear_infinite]" />
+            </div>
+            {status !== 'Active' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{status}</span>
+                </div>
+            )}
+            <style>{`
+                @keyframes scan {
+                    0% { top: 0; }
+                    100% { top: 100%; }
+                }
+            `}</style>
         </div>
     )
 }

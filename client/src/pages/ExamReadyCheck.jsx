@@ -322,61 +322,61 @@ export default function ExamReadyCheck() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 lg:p-12 relative overflow-hidden font-sans">
             {/* Background ambience */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[120px]" />
-                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-violet-600/5 rounded-full blur-[120px]" />
+                <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
             </div>
 
             <div className="relative z-10 w-full max-w-lg">
 
                 {/* ─── Intro Phase ───────────────────────────────────────── */}
                 {phase === 'intro' && (
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-indigo-900/20 border border-white/10 overflow-hidden">
-                        <div className="bg-[#0F172A] p-10 text-center relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-violet-600/20" />
+                    <div className="bg-white rounded-[2rem] lg:rounded-[3rem] shadow-2xl shadow-indigo-950/20 border border-slate-100 overflow-hidden">
+                        <div className="bg-slate-950 p-8 lg:p-12 text-center relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-violet-600/10" />
                             <div className="relative z-10">
-                                <div className="w-20 h-20 bg-indigo-500/20 border border-indigo-500/30 rounded-3xl flex items-center justify-center mx-auto mb-5">
-                                    <Shield size={40} className="text-indigo-400" strokeWidth={2} />
+                                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl lg:rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6">
+                                    <Shield size={32} lg:size={40} className="text-indigo-400" strokeWidth={2} />
                                 </div>
-                                <h1 className="text-3xl font-black font-outfit text-white tracking-tight mb-2">System Check</h1>
-                                <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                                    Before entering the exam, we need to verify your system and grant permissions. This ensures a smooth, violation-free session.
+                                <h1 className="text-2xl lg:text-4xl font-black font-outfit text-white tracking-tight mb-2 italic">Proctoring Sync</h1>
+                                <p className="text-slate-400 text-[10px] lg:text-xs font-bold uppercase tracking-widest leading-relaxed">
+                                    System Verification & Permissions
                                 </p>
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-4">
-                            <div className="space-y-3">
+                        <div className="p-6 lg:p-10 space-y-4">
+                            <div className="grid grid-cols-2 gap-3 lg:gap-4">
                                 {[
-                                    { icon: Camera, text: 'Camera permission for live proctoring' },
-                                    { icon: Mic, text: 'Microphone permission for audio monitoring' },
-                                    { icon: Wifi, text: 'Network stability verification' },
-                                    { icon: Monitor, text: 'Fullscreen and browser compatibility' },
+                                    { icon: Camera, text: 'Live Camera' },
+                                    { icon: Mic, text: 'Audio Guard' },
+                                    { icon: Wifi, text: 'Sync Status' },
+                                    { icon: Monitor, text: 'Deep Scan' },
                                 ].map(({ icon: Icon, text }, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-sm text-slate-600 font-medium">
-                                        <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl lg:rounded-2xl border border-slate-100">
+                                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shrink-0 shadow-sm">
                                             <Icon size={14} className="text-indigo-500" />
                                         </div>
-                                        {text}
+                                        <span className="text-[10px] font-black uppercase tracking-tight text-slate-700">{text}</span>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="pt-2 bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                                <p className="text-[11px] text-amber-700 font-bold leading-relaxed flex items-start gap-2">
-                                    <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                                    Your browser will ask for camera and microphone access. <strong>Please click "Allow"</strong> for both. These prompts here will <strong>not</strong> count as violations.
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl lg:rounded-2xl p-4 flex items-start gap-3">
+                                <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600" />
+                                <p className="text-[10px] text-amber-700 font-bold leading-relaxed italic">
+                                    Your browser will request hardware access. Please select <strong>Allow</strong> to begin the secure session.
                                 </p>
                             </div>
 
                             <button
                                 onClick={runChecks}
-                                className="w-full bg-[#0F172A] hover:bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm tracking-wide flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] shadow-xl shadow-slate-200 mt-2"
+                                className="w-full bg-slate-950 hover:bg-indigo-600 text-white py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.01] shadow-xl shadow-slate-200 mt-2"
                             >
-                                Begin System Check <ChevronRight size={18} strokeWidth={3} />
+                                Begin Sync <ChevronRight size={18} strokeWidth={3} />
                             </button>
                         </div>
                     </div>
@@ -384,67 +384,69 @@ export default function ExamReadyCheck() {
 
                 {/* ─── Checking / Done Phase ─────────────────────────────── */}
                 {(phase === 'checking' || phase === 'done') && (
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-indigo-900/20 border border-white/10 overflow-hidden">
+                    <div className="bg-white rounded-[2rem] lg:rounded-[3rem] shadow-2xl shadow-indigo-950/20 border border-slate-100 overflow-hidden">
                         {/* Header */}
-                        <div className="bg-[#0F172A] px-8 py-6 flex items-center justify-between">
+                        <div className="bg-slate-950 px-6 lg:px-10 py-5 lg:py-6 flex items-center justify-between">
                             <div>
-                                <h2 className="text-lg font-black font-outfit text-white">System Verification</h2>
-                                <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mt-0.5">
-                                    {allDone ? `${passedCount} / ${checks.length} checks passed` : 'Running checks...'}
+                                <h2 className="text-sm lg:text-lg font-black font-outfit text-white uppercase tracking-tight italic">Verification Matrix</h2>
+                                <p className="text-slate-500 text-[8px] lg:text-[10px] font-black uppercase tracking-widest mt-0.5">
+                                    {allDone ? `Check Complete: ${passedCount}/${checks.length}` : 'Scanning Environment...'}
                                 </p>
                             </div>
-                            {!allDone && <Loader2 size={24} className="text-indigo-400 animate-spin" />}
-                            {allDone && allRequiredPassed && <CheckCircle2 size={24} className="text-emerald-400" strokeWidth={2.5} />}
-                            {allDone && hasFailures && <XCircle size={24} className="text-red-400" strokeWidth={2.5} />}
+                            {!allDone && <Loader2 size={20} className="text-indigo-400 animate-spin" />}
+                            {allDone && allRequiredPassed && <CheckCircle2 size={22} className="text-emerald-400" strokeWidth={2.5} />}
+                            {allDone && hasFailures && <XCircle size={22} className="text-red-400" strokeWidth={2.5} />}
                         </div>
 
-                        <div className="p-6 space-y-3">
+                        <div className="p-4 lg:p-8 space-y-3 lg:space-y-4">
                             {/* Camera Preview (when passed) */}
                             {cameraStream && checks.find(c => c.id === 'camera')?.status === STATUS.PASSED && (
                                 <CameraPreview stream={cameraStream} />
                             )}
 
                             {/* Check Cards */}
-                            {checks.map(check => (
-                                <CheckCard key={check.id} check={check} onRetry={handleRetry} />
-                            ))}
+                            <div className="space-y-2 lg:space-y-3">
+                                {checks.map(check => (
+                                    <CheckCard key={check.id} check={check} onRetry={handleRetry} />
+                                ))}
+                            </div>
 
                             {/* Result: All passed */}
                             {allDone && allRequiredPassed && (
-                                <div className="pt-2 space-y-3">
-                                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3">
+                                <div className="pt-2 lg:pt-4 space-y-3 lg:space-y-4">
+                                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl lg:rounded-2xl p-4 flex items-start gap-3">
                                         <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" strokeWidth={2.5} />
                                         <div>
-                                            <p className="text-sm font-black text-emerald-800">All systems ready!</p>
-                                            <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Your environment has been verified. You can now enter the exam securely.</p>
+                                            <p className="text-xs lg:text-sm font-black text-emerald-900 uppercase">System Synchronized</p>
+                                            <p className="text-[10px] text-emerald-600 font-bold mt-0.5 italic">Security handshake completed. You may now enter the assessment.</p>
                                         </div>
                                     </div>
                                     <button
                                         onClick={handleEnterExam}
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm tracking-wide flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] shadow-xl shadow-emerald-200"
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.01] shadow-xl shadow-emerald-100"
                                     >
-                                        <Lock size={16} strokeWidth={3} /> Enter Secure Exam
+                                        <Lock size={16} strokeWidth={3} /> Enter Secure Portal
                                     </button>
                                 </div>
                             )}
 
                             {/* Result: Has failures */}
                             {allDone && hasFailures && (
-                                <div className="pt-2 space-y-3">
-                                    <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-start gap-3">
+                                <div className="pt-2 lg:pt-4 space-y-3 lg:space-y-4">
+                                    <div className="bg-red-50 border border-red-100 rounded-xl lg:rounded-2xl p-4 flex items-start gap-3">
                                         <XCircle size={18} className="text-red-500 shrink-0 mt-0.5" strokeWidth={2.5} />
                                         <div>
-                                            <p className="text-sm font-black text-red-800">Issues detected</p>
-                                            <p className="text-[11px] text-red-500 font-medium mt-0.5">
-                                                Please resolve the failed checks above and retry. Required items must pass before entering.
+                                            <p className="text-xs lg:text-sm font-black text-red-900 uppercase">Handshake Failed</p>
+                                            <p className="text-[10px] text-red-500 font-bold mt-0.5 italic">
+                                                Hardware constraints detected. Resolve the red items above to proceed.
                                             </p>
                                         </div>
                                     </div>
                                     <button
                                         onClick={runChecks}
-                                        className="w-full bg-[#0F172A] hover:bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm tracking-wide flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02]"
+                                        className="w-full bg-slate-950 hover:bg-indigo-600 text-white py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.01]"
                                     >
-                                        <RefreshCw size={16} strokeWidth={3} /> Re-run All Checks
+                                        <RefreshCw size={16} strokeWidth={3} /> Re-Sync Systems
                                     </button>
                                 </div>
                             )}
@@ -453,8 +455,8 @@ export default function ExamReadyCheck() {
                 )}
 
                 {/* Footer */}
-                <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-6">
-                    Secured by Mocker Proctoring Engine
+                <p className="text-center text-[8px] lg:text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] mt-8 opacity-50">
+                    Proctored Environment Active • Mocker v2
                 </p>
             </div>
         </div>
