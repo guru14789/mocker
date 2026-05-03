@@ -4,9 +4,10 @@ import { signInWithPopup } from 'firebase/auth';
 import { auth as firebaseAuth, googleProvider } from '../config/firebase';
 
 const AuthContext = createContext();
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/me`);
+      const res = await axios.get(`${API}/auth/me`);
       setUser(res.data);
     } catch (err) {
       localStorage.removeItem('token');
@@ -31,19 +32,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/login`, { email, password });
+  // identifier = username OR email
+  const login = async (identifier, password) => {
+    const res = await axios.post(`${API}/auth/login`, { identifier, password });
     localStorage.setItem('token', res.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
     setUser(res.data.user);
     return res.data;
   };
 
+  // signup sends all new fields; registration response does NOT auto-login
+  // (user must verify email first)
   const signup = async (userData) => {
-    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/register`, userData);
-    localStorage.setItem('token', res.data.token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-    setUser(res.data.user);
+    const res = await axios.post(`${API}/auth/register`, userData);
+    // No token stored — account pending verification
     return res.data;
   };
 
@@ -57,14 +59,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await signInWithPopup(firebaseAuth, googleProvider);
       const userEmail = result.user.email;
-      const userName = result.user.displayName;
-      
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/google`, {
+      const userName  = result.user.displayName;
+
+      const res = await axios.post(`${API}/auth/google`, {
         email: userEmail,
         name: userName,
-        role: role
+        role: role,
       });
-      
+
       localStorage.setItem('token', res.data.token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
       setUser(res.data.user);
@@ -75,9 +77,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resendVerification = async (email) => {
+    const res = await axios.post(`${API}/auth/resend-verification`, { email });
+    return res.data;
+  };
+
   const switchRole = async (newRole) => {
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/update-role`, { role: newRole });
+      const res = await axios.post(`${API}/auth/update-role`, { role: newRole });
       if (res.data.token) {
         localStorage.setItem('token', res.data.token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
@@ -90,8 +97,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      const res = await axios.post(`${API}/auth/update-profile`, profileData);
+      setUser({ ...user, profileCompleted: true });
+      return res.data;
+    } catch (err) {
+      console.error('updateProfile error:', err);
+      throw err;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loginWithGoogle, switchRole, loading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, loginWithGoogle, resendVerification, switchRole, updateProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );
