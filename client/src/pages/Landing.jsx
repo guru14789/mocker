@@ -11,10 +11,7 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-import { ShieldCheck, FileEdit, BarChart3 } from 'lucide-react'
-
 gsap.registerPlugin(ScrollTrigger)
-
 
 const Landing = () => {
   const main = React.useRef()

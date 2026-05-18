@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
+import ComparisonPage from './pages/ComparisonPage'
 import Auth from './pages/Auth'
 import Communities from './pages/Communities'
 import CreatorDashboard from './pages/CreatorDashboard'
@@ -33,6 +34,7 @@ function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<Landing />} />
+          <Route path="/comparison" element={<ComparisonPage />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />
           <Route path="/communities" element={<Communities />} />
