@@ -6,7 +6,6 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import ExamCard from '../components/landing/ExamCard'
 import Navbar from '../components/landing/Navbar'
-import Footer from '../components/landing/Footer'
 
 const omrExams = [
   { name: 'NEET', image: '/neet_thumbnail.png' },
@@ -48,10 +47,10 @@ const ComparisonPage = () => {
       <Navbar />
       <div ref={container} className="w-full pt-20">
         {/* Comparison Section */}
-        <section className="relative flex flex-col items-center justify-start px-4 pt-10 pb-32 overflow-hidden bg-white">
+        <section className="relative flex flex-col items-center justify-start px-4 pt-4 pb-10 overflow-hidden bg-white">
           
           {/* Exam Dashboard Grids */}
-          <div className="w-full max-w-[1350px] mx-auto flex flex-col lg:flex-row gap-6 lg:gap-6 mb-16 relative z-10 px-2 md:px-6">
+          <div className="w-full max-w-[1350px] mx-auto flex flex-col lg:flex-row gap-6 lg:gap-6 mb-8 relative z-10 px-2 md:px-6">
             {/* Section 1: OMR Exams */}
             <div className="exam-section flex-1 space-y-8 bg-slate-50/50 p-4 md:p-8 rounded-[3rem] border border-slate-200 shadow-sm h-full">
               <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-2">
@@ -94,7 +93,6 @@ const ComparisonPage = () => {
           </div>
         </section>
       </div>
-      <Footer />
     </div>
   )
 }
